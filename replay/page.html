@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Replay — rehearse a change before you ship it</title>
+<style>
+  :root{
+    --bg:#0b0f17; --panel:#131a25; --panel2:#0f151f; --border:#232c3b;
+    --text:#e6edf6; --muted:#8b98ac; --dim:#5d6a7e;
+    --indigo:#818cf8; --teal:#2dd4bf; --amber:#fbbf24; --red:#f87171; --green:#4ade80;
+    --mono:ui-monospace,"Cascadia Mono",Consolas,"SF Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--bg);color:var(--text);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    line-height:1.55;-webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px 96px}
+  a{color:var(--indigo)}
+
+  header{padding:56px 0 32px;border-bottom:1px solid var(--border);margin-bottom:32px}
+  h1{margin:0;font-size:34px;letter-spacing:-.5px;font-weight:700}
+  .tag{color:var(--muted);font-size:17px;margin-top:6px}
+  .built{color:var(--dim);font-size:13px;margin-top:14px}
+
+  h2{font-size:13px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);
+     font-weight:700;margin:40px 0 14px}
+
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:20px}
+
+  textarea{
+    width:100%;background:var(--panel2);color:var(--text);border:1px solid var(--border);
+    border-radius:8px;padding:14px 16px;font-size:16px;font-family:inherit;resize:vertical;
+    min-height:64px;
+  }
+  textarea:focus{outline:none;border-color:var(--indigo)}
+  .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:14px}
+  button{
+    background:var(--indigo);color:#0b0f17;border:0;border-radius:8px;
+    padding:11px 22px;font-size:15px;font-weight:650;cursor:pointer;font-family:inherit;
+  }
+  button:hover:not(:disabled){filter:brightness(1.1)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .presets{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .preset{
+    background:transparent;color:var(--muted);border:1px solid var(--border);
+    border-radius:999px;padding:6px 14px;font-size:13px;font-weight:500;
+  }
+  .preset:hover{color:var(--text);border-color:var(--dim);background:transparent}
+  .note{color:var(--dim);font-size:13px;margin-top:12px}
+
+  #progress{display:none;margin-top:20px}
+  .step{display:flex;gap:12px;padding:5px 0;font-size:14px;color:var(--muted);
+        font-family:var(--mono);animation:fade .25s ease}
+  .step b{color:var(--teal);font-weight:600;min-width:190px}
+  @keyframes fade{from{opacity:0;transform:translateY(-3px)}to{opacity:1}}
+  .spin{display:inline-block;width:11px;height:11px;border:2px solid var(--border);
+        border-top-color:var(--indigo);border-radius:50%;animation:sp .7s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  .banner{display:flex;align-items:center;gap:16px;border-radius:10px;padding:18px 22px;
+          border:1px solid;margin-bottom:18px}
+  .banner .lvl{font-size:22px;font-weight:800;letter-spacing:.5px}
+  .risk-high{background:rgba(248,113,113,.09);border-color:rgba(248,113,113,.4);color:var(--red)}
+  .risk-medium{background:rgba(251,191,36,.09);border-color:rgba(251,191,36,.4);color:var(--amber)}
+  .risk-low{background:rgba(74,222,128,.09);border-color:rgba(74,222,128,.4);color:var(--green)}
+  .banner p{margin:0;color:var(--text);font-size:15px}
+
+  .find{border-left:3px solid var(--red);background:var(--panel);border-radius:0 8px 8px 0;
+        padding:16px 20px;margin-bottom:12px}
+  .find.under{border-left-color:var(--amber)}
+  .find .kind{font-size:11px;letter-spacing:1.3px;font-weight:800;color:var(--red);
+              text-transform:uppercase}
+  .find.under .kind{color:var(--amber)}
+  .find h3{margin:6px 0 10px;font-size:16px;font-weight:600}
+  .find .why{color:var(--muted);font-size:14px;margin:0 0 10px}
+  .obs{font-family:var(--mono);font-size:14px;color:var(--text)}
+  .obs .b{color:var(--dim)} .obs .a{color:var(--red);font-weight:600}
+  .find.under .obs .a{color:var(--amber)}
+
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{text-align:left;font-size:11px;letter-spacing:1.1px;text-transform:uppercase;
+     color:var(--dim);font-weight:700;padding:0 10px 10px;border-bottom:1px solid var(--border)}
+  td{padding:11px 10px;border-bottom:1px solid rgba(35,44,59,.55);vertical-align:top}
+  tr:last-child td{border-bottom:0}
+  tr.surprise{background:rgba(248,113,113,.055)}
+  .val{font-family:var(--mono);white-space:nowrap}
+  .pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;
+        letter-spacing:.4px;white-space:nowrap}
+  .p-eff{background:rgba(74,222,128,.13);color:var(--green)}
+  .p-con{background:rgba(139,152,172,.13);color:var(--muted)}
+  .p-over{background:rgba(248,113,113,.15);color:var(--red)}
+  .p-under{background:rgba(251,191,36,.15);color:var(--amber)}
+  .p-unp{background:rgba(139,152,172,.1);color:var(--dim)}
+
+  .chal{border:1px solid var(--border);border-radius:9px;padding:16px 18px;margin-bottom:10px;
+        background:var(--panel)}
+  .sev{font-size:11px;font-weight:800;letter-spacing:1.1px;padding:2px 9px;border-radius:4px}
+  .s-critical{background:rgba(248,113,113,.16);color:var(--red)}
+  .s-high{background:rgba(251,191,36,.16);color:var(--amber)}
+  .s-medium{background:rgba(129,140,248,.16);color:var(--indigo)}
+  .s-low,.s-expected{background:rgba(139,152,172,.13);color:var(--muted)}
+  .chal p{margin:10px 0 0;font-size:14.5px}
+  .ev{margin-top:12px;padding-left:14px;border-left:2px solid var(--border)}
+  .ev div{font-family:var(--mono);font-size:12.5px;color:var(--muted);padding:2px 0}
+
+  details{margin-top:14px;border-top:1px solid var(--border);padding-top:14px}
+  summary{cursor:pointer;color:var(--muted);font-size:14px;font-weight:600}
+  summary:hover{color:var(--text)}
+  details pre{font-family:var(--mono);font-size:12.5px;color:var(--muted);
+              background:var(--panel2);padding:14px;border-radius:7px;overflow-x:auto}
+  .stats{color:var(--dim);font-size:13px;font-family:var(--mono);margin-top:22px;
+         padding-top:16px;border-top:1px solid var(--border)}
+  .err{color:var(--red);font-size:14px;margin-top:14px}
+  .ctx{color:var(--muted);font-size:14px;margin:0 0 14px}
+  @media(max-width:640px){
+    .val{white-space:normal}
+    header{padding:36px 0 24px}
+    h1{font-size:27px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Replay</h1>
+  <div class="tag">Rehearse a change before you ship it.</div>
+  <div class="built">
+    Agents execute your system before and after a proposed change, compare what
+    actually happened, and a verifier tries to prove the result wrong.
+    Built with the Strands Agents SDK on Amazon Bedrock.
+  </div>
+</header>
+
+<div class="card">
+  <textarea id="change" spellcheck="false"
+    placeholder="Describe a change, e.g. Change the standard transaction fee from 2.5% to 2%"></textarea>
+  <div class="presets" id="presets"></div>
+  <div class="row">
+    <button id="go">Rehearse change</button>
+    <span class="note" id="hint">Runs against the AcmePay demo repository. Takes about two minutes.</span>
+  </div>
+  <div id="progress"></div>
+  <div class="err" id="err"></div>
+</div>
+
+<div id="out"></div>
+
+</div>
+
+<script>
+const PRESETS = [
+  "Change the standard transaction fee from 2.5% to 2%",
+  "Change the refund fee from 2.5% to 3%",
+  "Add a 1% surcharge to international payments",
+];
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c =>
+  ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+const PILL = {
+  "confirmed effect":"p-eff", "contained":"p-con",
+  "over-propagation":"p-over", "under-propagation":"p-under", "unpredicted":"p-unp"
+};
+
+PRESETS.forEach(p => {
+  const b = document.createElement("button");
+  b.className = "preset"; b.textContent = p;
+  b.onclick = () => { $("change").value = p; $("change").focus(); };
+  $("presets").appendChild(b);
+});
+
+function step(stage, detail, live){
+  const d = document.createElement("div");
+  d.className = "step";
+  d.innerHTML = `<b>${esc(stage)}</b><span>${esc(detail)}</span>` +
+                (live ? ' <span class="spin"></span>' : '');
+  $("progress").appendChild(d);
+  $("progress").scrollTop = $("progress").scrollHeight;
+}
+
+function render(r, recorded){
+  const v = r.verification || {};
+  const risk = (v.overall_risk || "low").toLowerCase();
+  let h = "";
+
+  if (recorded){
+    h += `<p class="ctx">Showing a previously recorded rehearsal of
+      <em>${esc(r.request)}</em> — a real run, with real executions.
+      Describe your own change above to run a live one.</p>`;
+  }
+
+  h += `<h2>Result</h2>
+    <div class="banner risk-${risk}">
+      <span class="lvl">${risk.toUpperCase()}</span>
+      <p>${esc(v.summary || "No verification available.")}</p>
+    </div>`;
+
+  if (r.surprises && r.surprises.length){
+    h += `<h2>Prediction failures — these are the findings</h2>`;
+    for (const s of r.surprises){
+      const under = s.outcome === "under-propagation";
+      h += `<div class="find${under ? " under" : ""}">
+        <div class="kind">${esc(s.outcome)}</div>
+        <h3>${esc(s.name)}</h3>
+        <p class="why">Predicted <strong>${esc(s.predicted)}</strong> because ${esc(s.because)}</p>
+        <div class="obs"><span class="b">${esc(s.before)}</span> &rarr;
+          <span class="a">${esc(s.after)}</span></div>
+      </div>`;
+    }
+  }
+
+  h += `<h2>Behavioural diff</h2><div class="card"><table>
+    <tr><th>Scenario</th><th>Before</th><th>After</th><th>Predicted</th><th>Outcome</th></tr>`;
+  for (const d of r.divergences){
+    h += `<tr class="${d.surprising ? "surprise" : ""}">
+      <td>${esc(d.name)}<br><span style="color:var(--dim);font-family:var(--mono);font-size:12px">${esc(d.call)}</span></td>
+      <td class="val">${esc(d.before)}</td>
+      <td class="val">${esc(d.after)}</td>
+      <td style="color:var(--muted)">${esc(d.predicted || "—")}</td>
+      <td><span class="pill ${PILL[d.outcome] || "p-unp"}">${esc(d.outcome)}</span></td>
+    </tr>`;
+  }
+  h += `</table></div>`;
+
+  if (v.challenges && v.challenges.length){
+    h += `<h2>Verifier findings</h2>`;
+    for (const c of v.challenges){
+      h += `<div class="chal">
+        <span class="sev s-${esc(c.severity)}">${esc(c.severity).toUpperCase()}</span>
+        ${c.rule_violated ? `<span class="sev s-medium" style="margin-left:6px">${esc(c.rule_violated)}</span>` : ""}
+        <p>${esc(c.claim)}</p>
+        ${c.evidence && c.evidence.length
+          ? `<div class="ev">${c.evidence.map(e => `<div>${esc(e)}</div>`).join("")}</div>` : ""}
+      </div>`;
+    }
+  }
+
+  const imp = r.impact || {};
+  h += `<details><summary>Technical details</summary>
+    <pre>edits applied
+${(r.applied || []).map(a => `  ${a.path}  (${a.occurrences} occurrence)`).join("\n") || "  none"}
+
+suspected duplicates reported but deliberately not edited
+${(imp.suspected_duplicates || []).map(d => `  ${d}`).join("\n") || "  none"}
+${(r.discarded || []).length ? `
+scenarios discarded as unresolvable
+${r.discarded.map(d => `  ${d.id}: ${d.reason}`).join("\n")}` : ""}</pre></details>`;
+
+  const s = r.stats || {};
+  h += `<div class="stats">${s.executions} real executions across 2 isolated sandboxes ·
+    ${s.scenarios} scenarios · ${s.surprises} prediction failure(s)</div>`;
+
+  $("out").innerHTML = h;
+}
+
+async function loadFlagship(){
+  try{
+    const res = await fetch("/api/flagship");
+    if (res.ok) render(await res.json(), true);
+  }catch(e){ /* page still works without it */ }
+}
+
+$("go").onclick = () => {
+  const change = $("change").value.trim();
+  $("err").textContent = "";
+  if (!change){ $("err").textContent = "Describe a change first."; return; }
+
+  $("go").disabled = true;
+  $("go").textContent = "Rehearsing…";
+  $("out").innerHTML = "";
+  $("progress").innerHTML = "";
+  $("progress").style.display = "block";
+  step("starting", "spinning up agents", true);
+
+  const src = new EventSource("/api/rehearse?change=" + encodeURIComponent(change));
+
+  src.addEventListener("progress", e => {
+    const d = JSON.parse(e.data);
+    const spin = $("progress").querySelector(".spin");
+    if (spin) spin.remove();
+    step(d.stage, d.detail, true);
+  });
+
+  src.addEventListener("report", e => {
+    const spin = $("progress").querySelector(".spin");
+    if (spin) spin.remove();
+    render(JSON.parse(e.data), false);
+  });
+
+  src.addEventListener("error", e => {
+    const spin = $("progress").querySelector(".spin");
+    if (spin) spin.remove();
+    if (e.data){ try{ $("err").textContent = JSON.parse(e.data).message; }catch(_){} }
+    src.close();
+    $("go").disabled = false; $("go").textContent = "Rehearse change";
+  });
+
+  src.onerror = () => {
+    src.close();
+    $("go").disabled = false; $("go").textContent = "Rehearse change";
+  };
+};
+
+loadFlagship();
+</script>
+</body>
+</html>
