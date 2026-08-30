@@ -16,11 +16,11 @@
       "services/refund_service.py"
     ],
     "suspected_duplicates": [
-      "services/refund_service.py \u2014 calculate_refund_fee() on line 19 uses STANDARD_FEE_RATE directly, but BR-207 (docs/business-rules.md lines 13-19) states the refund fee is fixed by the merchant master agreement and explicitly does NOT move with BR-101. Changing STANDARD_FEE_RATE will silently lower the refund fee from 2.5% to 2%, breaching the contractual obligation. The refund service should have its own independent constant.",
-      "services/legacy_billing.py \u2014 _FEE_BASIS_POINTS = 250 on line 12 is a separate hardcoded copy of the BR-101 rate expressed in basis points (250 bp == 2.50%). BR-310 (docs/business-rules.md lines 24-36) confirms the legacy engine holds its own copy and that any change to BR-101 must be applied to the legacy engine separately. This edit does not touch it, so merchants on legacy-2019 and legacy-enterprise plans will remain at 2.5% while all other merchants move to 2%. The describe_rate() function will also continue to print '2.50%' on legacy merchant statements.",
-      "docs/business-rules.md line 7 \u2014 documents BR-101's rate as **2.5%**. After this edit the code will enforce 2% but the contractual documentation will still say 2.5%, creating documentation drift."
+      "services/refund_service.py - calculate_refund_fee() on line 19 uses STANDARD_FEE_RATE directly, but BR-207 (docs/business-rules.md lines 13-19) states the refund fee is fixed by the merchant master agreement and explicitly does NOT move with BR-101. Changing STANDARD_FEE_RATE will silently lower the refund fee from 2.5% to 2%, breaching the contractual obligation. The refund service should have its own independent constant.",
+      "services/legacy_billing.py - _FEE_BASIS_POINTS = 250 on line 12 is a separate hardcoded copy of the BR-101 rate expressed in basis points (250 bp == 2.50%). BR-310 (docs/business-rules.md lines 24-36) confirms the legacy engine holds its own copy and that any change to BR-101 must be applied to the legacy engine separately. This edit does not touch it, so merchants on legacy-2019 and legacy-enterprise plans will remain at 2.5% while all other merchants move to 2%. The describe_rate() function will also continue to print '2.50%' on legacy merchant statements.",
+      "docs/business-rules.md line 7 - documents BR-101's rate as **2.5%**. After this edit the code will enforce 2% but the contractual documentation will still say 2.5%, creating documentation drift."
     ],
-    "notes": "The edit is intentionally minimal: one constant in one file. Three serious consequences follow.\n\n(1) CONTRACTUAL BREACH \u2014 services/refund_service.py imports STANDARD_FEE_RATE and uses it to compute the refund fee. BR-207 explicitly states this rate is contractually independent of BR-101 and must not change when BR-101 changes. Because the refund service was wired to the shared constant instead of its own, this single edit will inadvertently lower the refund fee, violating the merchant master agreement.\n\n(2) SILENT INCONSISTENCY \u2014 services/legacy_billing.py encodes the same rate as _FEE_BASIS_POINTS = 250 (integer basis points for mainframe-compatible arithmetic). BR-310 requires this to be updated separately. The proposed edit does not touch it, so legacy-plan merchants routed through services/billing_service.py \u2192 legacy_billing.compute_fee_minor() will continue to be charged 2.5%, diverging from the modern path's new 2% rate.\n\n(3) DOCUMENTATION DRIFT \u2014 docs/business-rules.md still describes BR-101's rate as 2.5%. This file is described as contractual and requiring finance and legal sign-off, yet it will not be updated by this edit."
+    "notes": "The edit is intentionally minimal: one constant in one file. Three serious consequences follow.\n\n(1) CONTRACTUAL BREACH - services/refund_service.py imports STANDARD_FEE_RATE and uses it to compute the refund fee. BR-207 explicitly states this rate is contractually independent of BR-101 and must not change when BR-101 changes. Because the refund service was wired to the shared constant instead of its own, this single edit will inadvertently lower the refund fee, violating the merchant master agreement.\n\n(2) SILENT INCONSISTENCY - services/legacy_billing.py encodes the same rate as _FEE_BASIS_POINTS = 250 (integer basis points for mainframe-compatible arithmetic). BR-310 requires this to be updated separately. The proposed edit does not touch it, so legacy-plan merchants routed through services/billing_service.py → legacy_billing.compute_fee_minor() will continue to be charged 2.5%, diverging from the modern path's new 2% rate.\n\n(3) DOCUMENTATION DRIFT - docs/business-rules.md still describes BR-101's rate as 2.5%. This file is described as contractual and requiring finance and legal sign-off, yet it will not be updated by this edit."
   },
   "applied": [
     {
@@ -323,14 +323,14 @@
       {
         "scenario_id": "refund_fee_br207_fixed",
         "severity": "critical",
-        "claim": "Refund fee dropped from 25.00 to 20.00 (2.5% \u2192 2.0%), violating BR-207 which is contractually fixed and explicitly decoupled from BR-101. The root cause is services/refund_service.py:9 importing STANDARD_FEE_RATE from core/config.py and using it at line 19 in calculate_refund_fee(). BR-207 (docs/business-rules.md:17-18) states: 'This rate is fixed by the merchant master agreement and is not tied to the standard transaction fee in BR-101. If BR-101 changes, BR-207 does not change with it.' The code's own docstring at refund_service.py:17 admits the coupling is a historical shortcut. The refund service must define its own independent constant at 2.5%.",
+        "claim": "Refund fee dropped from 25.00 to 20.00 (2.5% → 2.0%), violating BR-207 which is contractually fixed and explicitly decoupled from BR-101. The root cause is services/refund_service.py:9 importing STANDARD_FEE_RATE from core/config.py and using it at line 19 in calculate_refund_fee(). BR-207 (docs/business-rules.md:17-18) states: 'This rate is fixed by the merchant master agreement and is not tied to the standard transaction fee in BR-101. If BR-101 changes, BR-207 does not change with it.' The code's own docstring at refund_service.py:17 admits the coupling is a historical shortcut. The refund service must define its own independent constant at 2.5%.",
         "rule_violated": "BR-207",
         "evidence": [
-          "docs/business-rules.md:13-19 \u2014 BR-207 defines refund fee as fixed at 2.5%, not tied to BR-101",
-          "services/refund_service.py:9 \u2014 imports STANDARD_FEE_RATE from core/config",
-          "services/refund_service.py:19 \u2014 calculate_refund_fee uses STANDARD_FEE_RATE directly",
-          "services/refund_service.py:17 \u2014 docstring acknowledges 'Historically this matched the standard payment fee, so it was wired straight to STANDARD_FEE_RATE'",
-          "Observed: refund_fee_br207_fixed 25.00 \u2192 20.00 (predicted unchanged, contradicted)"
+          "docs/business-rules.md:13-19 - BR-207 defines refund fee as fixed at 2.5%, not tied to BR-101",
+          "services/refund_service.py:9 - imports STANDARD_FEE_RATE from core/config",
+          "services/refund_service.py:19 - calculate_refund_fee uses STANDARD_FEE_RATE directly",
+          "services/refund_service.py:17 - docstring acknowledges 'Historically this matched the standard payment fee, so it was wired straight to STANDARD_FEE_RATE'",
+          "Observed: refund_fee_br207_fixed 25.00 → 20.00 (predicted unchanged, contradicted)"
         ]
       },
       {
@@ -339,10 +339,10 @@
         "claim": "Cardholder refund amount changed from 975.00 to 980.00 because it is derived from calculate_refund_fee (services/refund_service.py:24). Since the refund fee illegally decreased, the refund amount illegally increased. Merchants are now under-collecting by 0.5% on every refund, breaching the merchant master agreement.",
         "rule_violated": "BR-207",
         "evidence": [
-          "services/refund_service.py:23-24 \u2014 refund_amount calls calculate_refund_fee",
-          "docs/business-rules.md:15 \u2014 BR-207 mandates 2.5% refund fee",
-          "docs/business-rules.md:19 \u2014 'Amending BR-207 requires renegotiating the merchant contract'",
-          "Observed: refund_amount_br207_fixed 975.00 \u2192 980.00 (predicted unchanged, contradicted)"
+          "services/refund_service.py:23-24 - refund_amount calls calculate_refund_fee",
+          "docs/business-rules.md:15 - BR-207 mandates 2.5% refund fee",
+          "docs/business-rules.md:19 - 'Amending BR-207 requires renegotiating the merchant contract'",
+          "Observed: refund_amount_br207_fixed 975.00 → 980.00 (predicted unchanged, contradicted)"
         ]
       },
       {
@@ -351,11 +351,11 @@
         "claim": "Legacy billing engine was not updated. _FEE_BASIS_POINTS remains 250 (2.50%) at services/legacy_billing.py:12 while the BR-101 rate moved to 2.0%. BR-310 (docs/business-rules.md:32-33) explicitly requires: 'Any change to BR-101 must be applied to the legacy engine separately.' The edit only touched core/config.py, creating a split-rate regime: standard-plan merchants pay 2.0% while legacy-2019 and legacy-enterprise merchants remain at 2.5%.",
         "rule_violated": "BR-310",
         "evidence": [
-          "docs/business-rules.md:32-33 \u2014 'Any change to BR-101 must be applied to the legacy engine separately'",
-          "services/legacy_billing.py:12 \u2014 _FEE_BASIS_POINTS = 250 (unchanged)",
-          "services/legacy_billing.py:11 \u2014 comment confirms '250 basis points == 2.50%. Mirrored BR-101 at the time of the port'",
-          "services/billing_service.py:16-18 \u2014 routes legacy plans to legacy_billing.compute_fee_minor",
-          "Observed: legacy_compute_fee_minor 2500 \u2192 2500 (predicted changed, contradicted)"
+          "docs/business-rules.md:32-33 - 'Any change to BR-101 must be applied to the legacy engine separately'",
+          "services/legacy_billing.py:12 - _FEE_BASIS_POINTS = 250 (unchanged)",
+          "services/legacy_billing.py:11 - comment confirms '250 basis points == 2.50%. Mirrored BR-101 at the time of the port'",
+          "services/billing_service.py:16-18 - routes legacy plans to legacy_billing.compute_fee_minor",
+          "Observed: legacy_compute_fee_minor 2500 → 2500 (predicted changed, contradicted)"
         ]
       },
       {
@@ -364,10 +364,10 @@
         "claim": "Legacy merchant statements still display '2.50%' because describe_rate() at services/legacy_billing.py:23-24 formats _FEE_BASIS_POINTS, which was not updated. Legacy merchants will see a rate that disagrees with the new BR-101 rate. BR-310 mandates these stay in sync.",
         "rule_violated": "BR-310",
         "evidence": [
-          "services/legacy_billing.py:22-24 \u2014 describe_rate formats _FEE_BASIS_POINTS",
-          "services/billing_service.py:24-25 \u2014 statement_rate delegates to legacy_billing.describe_rate for legacy plans",
-          "docs/business-rules.md:32-33 \u2014 BR-310 requires legacy engine to track BR-101 changes",
-          "Observed: legacy_describe_rate '2.50%' \u2192 '2.50%' (predicted changed, contradicted)"
+          "services/legacy_billing.py:22-24 - describe_rate formats _FEE_BASIS_POINTS",
+          "services/billing_service.py:24-25 - statement_rate delegates to legacy_billing.describe_rate for legacy plans",
+          "docs/business-rules.md:32-33 - BR-310 requires legacy engine to track BR-101 changes",
+          "Observed: legacy_describe_rate '2.50%' → '2.50%' (predicted changed, contradicted)"
         ]
       },
       {
@@ -376,10 +376,10 @@
         "claim": "bill_transaction routed to the legacy engine for legacy-2019 merchants still charges 25.00 (2.5%) on a 1000 transaction instead of the intended 20.00 (2.0%). This is the user-facing manifestation of the _FEE_BASIS_POINTS under-propagation.",
         "rule_violated": "BR-310",
         "evidence": [
-          "services/billing_service.py:16-18 \u2014 routes legacy plans to legacy_billing.compute_fee_minor",
-          "services/legacy_billing.py:12 \u2014 _FEE_BASIS_POINTS = 250 (not updated)",
-          "docs/business-rules.md:32-33 \u2014 BR-310 requires separate update",
-          "Observed: legacy_plan_routed_billing 25.00 \u2192 25.00 (predicted changed, contradicted)"
+          "services/billing_service.py:16-18 - routes legacy plans to legacy_billing.compute_fee_minor",
+          "services/legacy_billing.py:12 - _FEE_BASIS_POINTS = 250 (not updated)",
+          "docs/business-rules.md:32-33 - BR-310 requires separate update",
+          "Observed: legacy_plan_routed_billing 25.00 → 25.00 (predicted changed, contradicted)"
         ]
       },
       {
@@ -388,9 +388,9 @@
         "claim": "statement_rate for legacy-2019 merchants still returns '2.50%' instead of '2.00%'. Merchant-facing statements will show the old rate while standard-plan statements show the new rate, creating an inconsistent customer experience and potential audit flag.",
         "rule_violated": "BR-310",
         "evidence": [
-          "services/billing_service.py:24-25 \u2014 delegates to legacy_billing.describe_rate for legacy plans",
-          "services/legacy_billing.py:22-24 \u2014 describe_rate returns '2.50%'",
-          "Observed: legacy_plan_statement_rate '2.50%' \u2192 '2.50%' (predicted changed, contradicted)"
+          "services/billing_service.py:24-25 - delegates to legacy_billing.describe_rate for legacy plans",
+          "services/legacy_billing.py:22-24 - describe_rate returns '2.50%'",
+          "Observed: legacy_plan_statement_rate '2.50%' → '2.50%' (predicted changed, contradicted)"
         ]
       },
       {
@@ -399,9 +399,9 @@
         "claim": "docs/business-rules.md line 7 still documents the BR-101 rate as '2.5%' after the code moved to 2.0%. The document header at line 3 says 'These rules are contractual.' This creates documentation drift between the contractual record and runtime behaviour, posing legal and audit risk.",
         "rule_violated": "BR-101",
         "evidence": [
-          "docs/business-rules.md:3 \u2014 'These rules are contractual.'",
-          "docs/business-rules.md:7 \u2014 'standard transaction fee of **2.5%**' (unchanged)",
-          "core/config.py:7 \u2014 STANDARD_FEE_RATE was changed to enforce 2.0% (confirmed by observed canonical_fee_br101 25.00 \u2192 20.00)"
+          "docs/business-rules.md:3 - 'These rules are contractual.'",
+          "docs/business-rules.md:7 - 'standard transaction fee of **2.5%**' (unchanged)",
+          "core/config.py:7 - STANDARD_FEE_RATE was changed to enforce 2.0% (confirmed by observed canonical_fee_br101 25.00 → 20.00)"
         ]
       },
       {
@@ -410,10 +410,10 @@
         "claim": "There is zero automated test coverage for any of the affected code paths. No tests exist for calculate_refund_fee, compute_fee_minor, bill_transaction, or STANDARD_FEE_RATE. Both the BR-207 contractual breach and the BR-310 under-propagation would ship to production undetected.",
         "rule_violated": null,
         "evidence": [
-          "search_tests('calculate_refund_fee') \u2014 no matches",
-          "search_tests('compute_fee_minor') \u2014 no matches",
-          "search_tests('bill_transaction') \u2014 no matches",
-          "search_tests('STANDARD_FEE_RATE') \u2014 no matches"
+          "search_tests('calculate_refund_fee') - no matches",
+          "search_tests('compute_fee_minor') - no matches",
+          "search_tests('bill_transaction') - no matches",
+          "search_tests('STANDARD_FEE_RATE') - no matches"
         ]
       },
       {
@@ -422,9 +422,9 @@
         "claim": "Payment fee correctly moved from 25.00 to 20.00, consistent with BR-101 rate change from 2.5% to 2.0%. The canonical path through services/payment_service.py:14 uses STANDARD_FEE_RATE from core/config.py:7, which is the intended propagation.",
         "rule_violated": null,
         "evidence": [
-          "services/payment_service.py:8 \u2014 imports STANDARD_FEE_RATE",
-          "services/payment_service.py:14 \u2014 calculate_fee uses STANDARD_FEE_RATE",
-          "docs/business-rules.md:7 \u2014 BR-101 governs this rate"
+          "services/payment_service.py:8 - imports STANDARD_FEE_RATE",
+          "services/payment_service.py:14 - calculate_fee uses STANDARD_FEE_RATE",
+          "docs/business-rules.md:7 - BR-101 governs this rate"
         ]
       },
       {
@@ -433,7 +433,7 @@
         "claim": "Net settlement correctly moved from 975.00 to 980.00, derived from the updated calculate_fee. This is the intended effect of the BR-101 change.",
         "rule_violated": null,
         "evidence": [
-          "services/payment_service.py:18 \u2014 net_settlement subtracts calculate_fee result"
+          "services/payment_service.py:18 - net_settlement subtracts calculate_fee result"
         ]
       },
       {
@@ -442,7 +442,7 @@
         "claim": "Modern billing path correctly moved from 25.00 to 20.00 for standard-plan merchants. services/billing_service.py:19 uses STANDARD_FEE_RATE on the non-legacy path.",
         "rule_violated": null,
         "evidence": [
-          "services/billing_service.py:19 \u2014 modern path uses STANDARD_FEE_RATE"
+          "services/billing_service.py:19 - modern path uses STANDARD_FEE_RATE"
         ]
       },
       {
@@ -451,7 +451,7 @@
         "claim": "Modern statement rate correctly moved from '2.50%' to '2.00%'. services/billing_service.py:26 formats STANDARD_FEE_RATE for non-legacy merchants.",
         "rule_violated": null,
         "evidence": [
-          "services/billing_service.py:26 \u2014 formats STANDARD_FEE_RATE * 100"
+          "services/billing_service.py:26 - formats STANDARD_FEE_RATE * 100"
         ]
       },
       {
@@ -460,8 +460,8 @@
         "claim": "Rounding behaviour unchanged at 10.00, as expected. BR-415 and core/money.py are unrelated to the fee rate change.",
         "rule_violated": null,
         "evidence": [
-          "core/money.py:12-14 \u2014 to_money uses ROUND_HALF_UP, not fee rate",
-          "docs/business-rules.md:38-41 \u2014 BR-415 is independent of BR-101"
+          "core/money.py:12-14 - to_money uses ROUND_HALF_UP, not fee rate",
+          "docs/business-rules.md:38-41 - BR-415 is independent of BR-101"
         ]
       }
     ]

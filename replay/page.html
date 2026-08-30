@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Replay — rehearse a change before you ship it</title>
+<title>Replay - rehearse a change before you ship it</title>
 <style>
   :root{
     --bg:#0b0f17; --panel:#131a25; --panel2:#0f151f; --border:#232c3b;
@@ -210,7 +210,7 @@ function render(r, recorded){
 
   if (recorded){
     h += `<p class="ctx">Showing a previously recorded rehearsal of
-      <em>${esc(r.request)}</em> — a real run, with real executions.
+      <em>${esc(r.request)}</em> - a real run, with real executions.
       Describe your own change above to run a live one.</p>`;
   }
 
@@ -221,7 +221,7 @@ function render(r, recorded){
     </div>`;
 
   if (r.surprises && r.surprises.length){
-    h += `<h2>Prediction failures — these are the findings</h2>`;
+    h += `<h2>Prediction failures - these are the findings</h2>`;
     for (const s of r.surprises){
       const under = s.outcome === "under-propagation";
       h += `<div class="find${under ? " under" : ""}">
@@ -241,7 +241,7 @@ function render(r, recorded){
       <td>${esc(d.name)}<br><span style="color:var(--dim);font-family:var(--mono);font-size:12px">${esc(d.call)}</span></td>
       <td class="val">${esc(d.before)}</td>
       <td class="val">${esc(d.after)}</td>
-      <td style="color:var(--muted)">${esc(d.predicted || "—")}</td>
+      <td style="color:var(--muted)">${esc(d.predicted || "-")}</td>
       <td><span class="pill ${PILL[d.outcome] || "p-unp"}">${esc(d.outcome)}</span></td>
     </tr>`;
   }

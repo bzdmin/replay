@@ -10,6 +10,29 @@ from typing import Any
 
 from .pipeline import RehearsalReport
 
+# Models reach for em and en dashes constantly. Normalise them to a plain
+# hyphen on the way out so the page reads consistently, whatever the agents
+# happened to write this run.
+_DASHES = {"—": "-", "–": "-", "−": "-"}
+
+
+def clean(text: Any) -> Any:
+    """Normalise dash characters in any string passing through to the page."""
+    if not isinstance(text, str):
+        return text
+    for bad, good in _DASHES.items():
+        text = text.replace(bad, good)
+    return text
+
+
+def clean_deep(value: Any) -> Any:
+    """Apply :func:`clean` to every string in a nested structure."""
+    if isinstance(value, dict):
+        return {k: clean_deep(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [clean_deep(v) for v in value]
+    return clean(value)
+
 
 def divergence_to_dict(d: Any) -> dict[str, Any]:
     return {
@@ -30,6 +53,10 @@ def divergence_to_dict(d: Any) -> dict[str, Any]:
 
 def report_to_dict(report: RehearsalReport) -> dict[str, Any]:
     """Flatten a completed rehearsal into JSON-safe data."""
+    return clean_deep(_report_to_dict(report))
+
+
+def _report_to_dict(report: RehearsalReport) -> dict[str, Any]:
     verification = report.verification
     return {
         "request": report.request,
