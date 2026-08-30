@@ -1,0 +1,25 @@
+# Render blueprint.
+#
+# Render builds the Dockerfile and injects $PORT, which the image already
+# honours. The free plan sleeps when idle; .github/workflows/keep-warm.yml
+# pings /healthz every ten minutes so a visitor never meets a cold start.
+#
+# The two AWS secrets are marked sync:false, so Render prompts for them at
+# deploy time and never stores them in this file.
+
+services:
+  - type: web
+    name: replay
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_REGION
+        value: us-east-1
