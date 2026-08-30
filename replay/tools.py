@@ -173,7 +173,7 @@ def build_repo_tools(repo: Path) -> list[Any]:
                     start = max(0, lineno - 4)
                     end = min(len(lines), lineno + 8)
                     body = "\n".join(lines[start:end])
-                    sections.append(f"=== {_rel(path)}:{start + 1} ---\n{body}")
+                    sections.append(f"=== {_rel(path)}:{start + 1} ===\n{body}")
                     break
 
         return "\n\n".join(sections[:6]) if sections else f"no documentation mentions {query!r}"
