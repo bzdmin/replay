@@ -30,9 +30,22 @@ FLAGSHIP = ROOT / "data" / "flagship.json"
 # spend guards
 # A rehearsal is a handful of agent turns over a real repository. Cheap once,
 # ruinous if a crawler finds the endpoint.
+# One at a time. Not arbitrary: the app sits at ~104MB idle and a rehearsal
+# peaks around 200MB, so two concurrent runs would crowd a 512MB instance.
 MAX_CONCURRENT = 1
-PER_IP_COOLDOWN_S = 120
-GLOBAL_HOURLY_LIMIT = 25
+
+# Long enough to stop a script, short enough that someone who just watched a
+# result can immediately try a different change. Two minutes was too long: a
+# judge trying a second preset should not be told to come back later.
+PER_IP_COOLDOWN_S = 45
+
+GLOBAL_HOURLY_LIMIT = 30
+
+# A hard lifetime ceiling on live runs. The hourly limit protects against a
+# burst; this protects the credit balance against a slow, patient drain over
+# the weeks the demo is public.
+TOTAL_RUN_BUDGET = 400
+
 MAX_REQUEST_CHARS = 300
 
 # The verifier reads code for minutes without emitting progress. With no bytes
@@ -44,6 +57,7 @@ HEARTBEAT_S = 10
 _running = asyncio.Semaphore(MAX_CONCURRENT)
 _last_seen: dict[str, float] = {}
 _recent: deque[float] = deque(maxlen=GLOBAL_HOURLY_LIMIT)
+_total_runs = 0
 
 app = FastAPI(title="Replay", docs_url=None, redoc_url=None)
 
@@ -52,18 +66,25 @@ def _rate_limited(ip: str) -> str | None:
     """Return a human-readable refusal, or None if the request may proceed."""
     now = time.time()
 
+    if _total_runs >= TOTAL_RUN_BUDGET:
+        return (
+            "This demo has used up its budget for live rehearsals. Everything "
+            "below is a real recorded run, and the repository has instructions "
+            "for running your own."
+        )
+
     while _recent and now - _recent[0] > 3600:
         _recent.popleft()
     if len(_recent) >= GLOBAL_HOURLY_LIMIT:
         return (
-            "Replay has hit its hourly limit for live rehearsals. The recorded "
-            "run below is a real rehearsal and shows exactly what a live one does."
+            "Replay has hit its hourly limit for live rehearsals. The run shown "
+            "below is real, and shows exactly what a live one produces."
         )
 
     last = _last_seen.get(ip)
     if last is not None and now - last < PER_IP_COOLDOWN_S:
         wait = int(PER_IP_COOLDOWN_S - (now - last))
-        return f"One rehearsal at a time, please. Try again in {wait}s."
+        return f"Just a moment - you can start another rehearsal in {wait}s."
 
     return None
 
@@ -109,10 +130,19 @@ async def rehearse(request: Request, change: str = "") -> StreamingResponse:
         if _running.locked():
             yield _sse(
                 "error",
-                {"message": "A rehearsal is already running. Give it a moment."},
+                {
+                    "message": (
+                        "Someone else is running a rehearsal right now, and this "
+                        "demo runs one at a time. They take about two minutes. "
+                        "The result shown below is a real recorded run in the "
+                        "meantime."
+                    )
+                },
             )
             return
 
+        global _total_runs
+        _total_runs += 1
         _last_seen[ip] = time.time()
         _recent.append(time.time())
 
