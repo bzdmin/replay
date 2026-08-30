@@ -63,6 +63,30 @@
         border-top-color:var(--indigo);border-radius:50%;animation:sp .7s linear infinite}
   @keyframes sp{to{transform:rotate(360deg)}}
 
+  /* The experiment, made visible. This is the first thing a visitor sees and
+     it has about fifteen seconds to say: two worlds were run and compared. */
+  .exp{border:1px solid var(--border);border-radius:12px;padding:24px;background:var(--panel2);
+       margin-bottom:22px}
+  .exp .q{font-size:17px;color:var(--text);text-align:center;margin-bottom:20px}
+  .exp .q span{color:var(--indigo);font-weight:600}
+  .worlds{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:stretch}
+  .world{border:1px solid var(--border);border-radius:9px;padding:14px 16px;background:var(--panel)}
+  .world.after{border-color:var(--indigo)}
+  .world .wl{font-size:10.5px;letter-spacing:1.3px;font-weight:800;color:var(--dim);
+             text-transform:uppercase;margin-bottom:7px}
+  .world.after .wl{color:var(--indigo)}
+  .world .wd{font-size:13.5px;color:var(--muted);line-height:1.5}
+  .vs{display:flex;align-items:center;color:var(--dim);font-size:20px;padding:0 2px}
+  .expfoot{margin-top:18px;padding-top:16px;border-top:1px solid var(--border);
+           display:flex;gap:26px;flex-wrap:wrap;justify-content:center;
+           font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+  .expfoot b{color:var(--text);font-weight:600}
+  .expfoot .hot{color:var(--red);font-weight:600}
+  @media(max-width:680px){
+    .worlds{grid-template-columns:1fr}
+    .vs{justify-content:center;padding:2px 0}
+  }
+
   .banner{display:flex;align-items:center;gap:16px;border-radius:10px;padding:18px 22px;
           border:1px solid;margin-bottom:18px}
   .banner .lvl{font-size:22px;font-weight:800;letter-spacing:.5px}
@@ -214,7 +238,32 @@ function render(r, recorded){
       Describe your own change above to run a live one.</p>`;
   }
 
-  h += `<h2>Result</h2>
+  const st = r.stats || {};
+  h += `<h2>The experiment</h2>
+    <div class="exp">
+      <div class="q">If we <span>${esc(r.request)}</span>, what actually changes?</div>
+      <div class="worlds">
+        <div class="world">
+          <div class="wl">Current system</div>
+          <div class="wd">The code as it is today. ${st.scenarios} scenarios executed
+            for real, and their results recorded.</div>
+        </div>
+        <div class="vs">&rarr;</div>
+        <div class="world after">
+          <div class="wl">Proposed system</div>
+          <div class="wd">An isolated copy with the change applied. The same
+            ${st.scenarios} scenarios, executed again.</div>
+        </div>
+      </div>
+      <div class="expfoot">
+        <span><b>${st.executions}</b> real executions</span>
+        <span><b>2</b> isolated sandboxes</span>
+        <span><b>${st.changed}</b> behaved differently</span>
+        <span class="${st.surprises ? "hot" : ""}"><b>${st.surprises}</b> contradicted their prediction</span>
+      </div>
+    </div>`;
+
+  h += `<h2>Where reality diverged</h2>
     <div class="banner risk-${risk}">
       <span class="lvl">${risk.toUpperCase()}</span>
       <p>${esc(v.summary || "No verification available.")}</p>
