@@ -231,6 +231,13 @@ def _verification_brief(report: RehearsalReport) -> str:
     lines = [
         f"Proposed change: {report.request}",
         "",
+        "IMPORTANT, about your tools. They read the repository as it is BEFORE the "
+        "change. That is deliberate: your job is to explain why behaviour diverged, "
+        "and the cause almost always lives in the original code. It also means you "
+        "will see the old values still in place. Do NOT conclude from that that the "
+        "edit failed to apply. The edits below were applied to an isolated copy, and "
+        "the observed results underneath came from executing that modified copy.",
+        "",
         "Edits actually applied:",
     ]
     lines += [f"  {e.path} ({e.occurrences} occurrence(s))" for e in report.applied]
