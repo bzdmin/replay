@@ -27,7 +27,7 @@ REPO = ROOT / "demo-repo" / "acmepay"
 PAGE = Path(__file__).parent / "page.html"
 FLAGSHIP = ROOT / "data" / "flagship.json"
 
-# --- spend guards ----------------------------------------------------------
+# spend guards
 # A rehearsal is a handful of agent turns over a real repository. Cheap once,
 # ruinous if a crawler finds the endpoint.
 MAX_CONCURRENT = 1

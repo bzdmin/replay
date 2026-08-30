@@ -44,8 +44,8 @@ class Edit:
     """A single literal substitution inside one file.
 
     By default an edit must match exactly once. A `find` string that appears
-    more than once is ambiguous -- the agent meant one of them, and we cannot
-    know which -- so it is rejected rather than applied to all of them. Set
+    more than once is ambiguous - the agent meant one of them, and we cannot
+    know which - so it is rejected rather than applied to all of them. Set
     `allow_multiple` only when replacing every occurrence is genuinely intended.
     """
 

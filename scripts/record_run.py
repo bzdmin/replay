@@ -3,7 +3,7 @@
     python scripts/record_run.py
 
 The web page loads this cached run on first paint, so a visitor sees a real
-finished rehearsal immediately instead of an empty form -- and so the flagship
+finished rehearsal immediately instead of an empty form - and so the flagship
 demo never depends on a live model call succeeding while someone is watching.
 """
 

@@ -51,7 +51,7 @@ def build_repo_tools(repo: Path) -> list[Any]:
         """Search the repository for a regular expression.
 
         Use this to find where a value, constant, or symbol is used. Remember
-        that the same rule can be encoded in more than one form -- a rate may
+        that the same rule can be encoded in more than one form - a rate may
         appear as a decimal in one file and as basis points in another, so
         search for the concept, not only the literal you were given.
 
@@ -173,7 +173,7 @@ def build_repo_tools(repo: Path) -> list[Any]:
                     start = max(0, lineno - 4)
                     end = min(len(lines), lineno + 8)
                     body = "\n".join(lines[start:end])
-                    sections.append(f"--- {_rel(path)}:{start + 1} ---\n{body}")
+                    sections.append(f"=== {_rel(path)}:{start + 1} ---\n{body}")
                     break
 
         return "\n\n".join(sections[:6]) if sections else f"no documentation mentions {query!r}"

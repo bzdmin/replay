@@ -15,7 +15,7 @@ from strands.models import BedrockModel
 # Bedrock model identifiers.
 #
 # Every current-generation Anthropic model on Bedrock is INFERENCE_PROFILE-only
-# -- there is no on-demand throughput for the bare "anthropic.<id>" form, and
+# - there is no on-demand throughput for the bare "anthropic.<id>" form, and
 # invoking it returns AccessDeniedException rather than a validation error.
 # So the regional profile prefix is the default, not an escape hatch.
 # Use "global." for cross-region routing, or "" only for a legacy ON_DEMAND id.

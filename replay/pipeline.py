@@ -87,7 +87,7 @@ async def rehearse_change(
     # 1. What does this change touch?
     #
     # Two phases, deliberately. Asking for structured output directly skips the
-    # tool-use loop entirely and the model answers from imagination -- it will
+    # tool-use loop entirely and the model answers from imagination - it will
     # confidently invent module names. So the agent investigates first, with
     # tools, and only then serialises what it actually found.
     progress("impact", "reading the repository")
@@ -132,7 +132,7 @@ async def rehearse_change(
         "Read the documentation before predicting. For each suspected duplicate "
         "above, find the rule that governs it and decide whether that rule is "
         "supposed to follow the change. If it is, predict 'changed' even if you "
-        "can see the edit will not reach it -- that gap is exactly what this "
+        "can see the edit will not reach it - that gap is exactly what this "
         "rehearsal is meant to expose. Predict 'unchanged' only where a separate "
         "named rule holds it fixed, and quote that rule."
     )
@@ -215,7 +215,7 @@ async def rehearse_change(
     report.verification = await agent.structured_output_async(
         VerificationReport,
         "Now report your findings. Every claim needs evidence you actually "
-        "read -- a file:line reference or a business rule id.",
+        "read - a file:line reference or a business rule id.",
     )
     progress(
         "verify",

@@ -24,9 +24,7 @@ from strands import Agent
 from .models import model_for
 from .tools import build_repo_tools
 
-# --------------------------------------------------------------------------
 # Structured outputs
-# --------------------------------------------------------------------------
 
 
 class ProposedEdit(BaseModel):
@@ -99,9 +97,7 @@ class VerificationReport(BaseModel):
     challenges: list[Challenge]
 
 
-# --------------------------------------------------------------------------
 # Agents
-# --------------------------------------------------------------------------
 
 _IMPACT_PROMPT = """\
 You are the Impact Agent in a change-rehearsal system.
@@ -120,7 +116,7 @@ So your job has two strictly separated halves.
 engineer would make if they took the request at face value and stopped there.
 Usually this is one edit to one canonical definition. Do not update a second
 copy of the value. Do not update documentation. Do not decouple a shared
-constant. Do not fix anything, even when you can see it is broken -- especially
+constant. Do not fix anything, even when you can see it is broken - especially
 then. Each `find` string must be copied verbatim from a file you have read, and
 must be long enough to match exactly one place in that file; a `find` that
 matches two lines will be rejected.
@@ -142,8 +138,8 @@ You are the Scenario Agent in a change-rehearsal system.
 
 You are not writing tests. You are stating falsifiable predictions.
 
-Each scenario is one function call, executed for real twice -- once against the
-current code, once against the proposed code -- and the two return values
+Each scenario is one function call, executed for real twice - once against the
+current code, once against the proposed code - and the two return values
 compared. You never say what the value should BE. You only predict whether it
 should MOVE. That distinction is what makes this system trustworthy: the
 current code is the oracle, so you are never asked to invent an expected value,
@@ -154,7 +150,7 @@ For every scenario, commit to `expected_verdict`:
   "changed"    this observation SHOULD move, because the rule being changed
                genuinely governs it
   "unchanged"  this observation MUST stay identical, because no rule the
-               engineer is changing governs it -- or because a separate rule
+               engineer is changing governs it - or because a separate rule
                explicitly fixes it
 
 Predict from the RULES, never from the CODE. This is the single hardest thing
@@ -167,14 +163,14 @@ question is what the rehearsal is for. If you answer it in your prediction, you
 have predicted the bug instead of the requirement, and when reality agrees with
 you nothing has been learned.
 
-The trap, concretely. You will be handed a list of suspected duplicates --
+The trap, concretely. You will be handed a list of suspected duplicates -
 places that implement the same rule in another form, often holding their own
 private copy of the value. It is tempting to reason: "this component has its
 own separate constant, so the edit won't touch it, so I predict unchanged."
 That reasoning is wrong. It describes the mechanism, not the requirement.
 
 If the rule governs that component, then when the rule changes that component's
-behaviour is *supposed* to change, and you must predict "changed" -- even
+behaviour is *supposed* to change, and you must predict "changed" - even
 though, and precisely because, you suspect it will not. When it then fails to
 move, you have caught a component the change never reached. That is the finding.
 
@@ -195,8 +191,8 @@ The last two are the entire reason this product exists. Design deliberately to
 provoke them.
 
 Coverage is the wrong objective. Do not try to exercise every line, or every
-component. Instead: for each distinct place the affected rule is encoded --
-the canonical definition AND every suspected duplicate you were handed --
+component. Instead: for each distinct place the affected rule is encoded -
+the canonical definition AND every suspected duplicate you were handed -
 write the narrowest call that isolates that one encoding. A call that fans out
 through several components cannot tell you which one diverged.
 
