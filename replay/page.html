@@ -142,6 +142,20 @@
          padding-top:16px;border-top:1px solid var(--border)}
   .err{color:var(--red);font-size:14px;margin-top:14px}
   .ctx{color:var(--muted);font-size:14px;margin:0 0 14px}
+
+  .more{margin-top:56px;padding-top:36px;border-top:1px solid var(--border)}
+  .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:22px}
+  .col h3{font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);
+          font-weight:700;margin:0 0 12px}
+  .col p,.col li{color:var(--muted);font-size:14px;line-height:1.65;margin:0 0 10px}
+  .col ul{margin:0;padding-left:18px}
+  .col strong{color:var(--text);font-weight:600}
+  .col code,pre.cmd{font-family:var(--mono);font-size:12.5px}
+  pre.cmd{background:var(--panel2);border:1px solid var(--border);border-radius:7px;
+          padding:13px 15px;overflow-x:auto;color:var(--muted);margin:0}
+  .yes{color:var(--green)} .no{color:var(--red)}
+  .foot{margin-top:40px;padding-top:22px;border-top:1px solid var(--border);
+        color:var(--dim);font-size:13px;display:flex;gap:20px;flex-wrap:wrap}
   @media(max-width:640px){
     .val{white-space:normal}
     header{padding:36px 0 24px}
@@ -189,6 +203,72 @@
 </div>
 
 <div id="out"></div>
+
+<section class="more">
+  <div class="cols">
+
+    <div class="col">
+      <h3>Where Replay works</h3>
+      <p>It needs three things, and it is honest about all of them.</p>
+      <ul>
+        <li><span class="yes">&#10003;</span> <strong>Behaviour it can execute</strong> - functions that
+          take inputs and return values.</li>
+        <li><span class="yes">&#10003;</span> <strong>Intent written down</strong> - a rulebook, a spec,
+          documented policy. Without it there is nothing to predict against, only
+          code to describe.</li>
+        <li><span class="yes">&#10003;</span> <strong>Reachable in a single call</strong> - pricing, fees,
+          billing, tax, policy engines.</li>
+        <li><span class="no">&#10007;</span> <strong>Not yet:</strong> behaviour that needs setup first.
+          A login flow or a shopping cart has memory, and Replay does not
+          generate the steps to put it in the right state.</li>
+      </ul>
+      <p>Pointed at a codebase it cannot handle, it discards the scenarios it
+        could not run and says so, rather than inventing findings.</p>
+    </div>
+
+    <div class="col">
+      <h3>Run it on your own code</h3>
+      <p>This page only rehearses against the bundled demo application, on
+        purpose: Replay executes the code it is given, so a public box accepting
+        any repository would be executing strangers' code on this server.</p>
+      <pre class="cmd">git clone https://github.com/bzdmin/replay
+cd replay
+pip install -r requirements.txt
+
+python scripts/check_aws.py
+
+python scripts/rehearse.py \
+  --repo /path/to/your/project \
+  "Change the retry limit from 3 to 5"</pre>
+      <p style="margin-top:12px">You bring your own AWS credentials, and it runs
+        entirely on your machine.</p>
+    </div>
+
+    <div class="col">
+      <h3>What's next</h3>
+      <ul>
+        <li><strong>Scenarios with setup.</strong> Multi-step scenarios in a
+          locked-down sandbox, so stateful behaviour becomes reachable. The
+          sandbox is the hard part, not the scenarios.</li>
+        <li><strong>Beyond code.</strong> Configuration, dependency upgrades and
+          schema migrations are changes too, and they break the same rules.</li>
+        <li><strong>Behavioural equivalence.</strong> Does a rewritten service
+          still preserve the behaviour that mattered? That is the same question
+          asked of a migration.</li>
+        <li><strong>Run it on a pull request.</strong> A rehearsal is most useful
+          before review, not after.</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <div class="foot">
+    <span>Built with the Strands Agents SDK on Amazon Bedrock</span>
+    <span><a href="https://github.com/bzdmin/replay">Source on GitHub</a></span>
+    <span>Apache-2.0</span>
+    <span>A rehearsal costs about $0.58 in model tokens</span>
+  </div>
+</section>
 
 </div>
 

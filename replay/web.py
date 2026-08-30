@@ -47,7 +47,7 @@ GLOBAL_HOURLY_LIMIT = 30
 # slow drain over the weeks the demo stays public, and it is denominated in
 # money rather than runs so it stays honest if the cost per run changes.
 # Override with REPLAY_SPEND_BUDGET_USD.
-TOTAL_SPEND_BUDGET_USD = float(os.environ.get("REPLAY_SPEND_BUDGET_USD", "20"))
+TOTAL_SPEND_BUDGET_USD = float(os.environ.get("REPLAY_SPEND_BUDGET_USD", "40"))
 
 MAX_REQUEST_CHARS = 300
 
