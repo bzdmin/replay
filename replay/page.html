@@ -50,6 +50,9 @@
   }
   .preset:hover{color:var(--text);border-color:var(--dim);background:transparent}
   .note{color:var(--dim);font-size:13px;margin-top:12px}
+  .about{margin-top:18px;padding-top:16px;border-top:1px solid var(--border);
+         color:var(--muted);font-size:13.5px;line-height:1.6}
+  .about strong{color:var(--text);font-weight:600}
 
   #progress{display:none;margin-top:20px}
   .step{display:flex;gap:12px;padding:5px 0;font-size:14px;color:var(--muted);
@@ -141,7 +144,21 @@
   <div class="presets" id="presets"></div>
   <div class="row">
     <button id="go">Rehearse change</button>
-    <span class="note" id="hint">Runs against the AcmePay demo repository. Takes about two minutes.</span>
+    <span class="note" id="hint">Takes about two minutes.</span>
+  </div>
+
+  <div class="about">
+    <strong>What is it rehearsing against?</strong>
+    A small payments application called <strong>AcmePay</strong>, included in this
+    project at
+    <a href="https://github.com/bzdmin/replay/tree/main/demo-repo/acmepay" target="_blank"
+       rel="noopener">demo-repo/acmepay</a>.
+    It has a payment service, a refund service, a modern billing service, a
+    legacy billing engine ported from a mainframe, and a
+    <a href="https://github.com/bzdmin/replay/blob/main/demo-repo/acmepay/docs/business-rules.md"
+       target="_blank" rel="noopener">written rulebook</a> of contractual
+    business rules. Replay reads it, runs it, changes it, and runs it again.
+    Browse it before you start and the findings below will mean more.
   </div>
   <div id="progress"></div>
   <div class="err" id="err"></div>
@@ -152,10 +169,13 @@
 </div>
 
 <script>
+// Replay substitutes values in existing rules; it does not author new
+// features. Presets are chosen to show two different shapes of result:
+// a change that breaks two contracts, and a change that turns out safe
+// but surfaces a subtle arithmetic difference.
 const PRESETS = [
   "Change the standard transaction fee from 2.5% to 2%",
-  "Change the refund fee from 2.5% to 3%",
-  "Add a 1% surcharge to international payments",
+  "Move legacy-enterprise merchants onto the modern billing path",
 ];
 
 const $ = id => document.getElementById(id);
