@@ -70,18 +70,50 @@ export AWS_REGION=us-east-1
 
 ## Running it
 
-Full agent-driven rehearsal:
+**Check your setup first.** This verifies credentials, region, and that Bedrock
+will actually answer — and names the exact problem if not:
 
 ```bash
-python scripts/rehearse.py "Change the transaction fee from 2.5% to 2%"
+python scripts/check_aws.py
 ```
 
-The deterministic harness on its own, with hand-written scenarios and no model
-calls — useful for verifying the sandbox works without spending anything:
+**The web interface** — the same thing the live demo runs:
+
+```bash
+uvicorn replay.web:app --host 0.0.0.0 --port 8000
+```
+
+Then open <http://localhost:8000>. The page loads a previously recorded
+rehearsal immediately, and you can type your own change to run a live one and
+watch the agents work.
+
+**A rehearsal from the command line:**
+
+```bash
+python scripts/rehearse.py "Change the standard transaction fee from 2.5% to 2%"
+```
+
+**The deterministic harness on its own**, with hand-written scenarios and no
+model calls — useful for verifying the sandbox works without spending anything,
+and for seeing that the before/after evidence is real:
 
 ```bash
 python scripts/demo_rehearsal.py
 ```
+
+**Re-record the flagship run** shown on the web page:
+
+```bash
+python scripts/record_run.py
+```
+
+### Live rehearsals are rate limited
+
+A public URL making real Bedrock calls is a fast way to lose a credit balance,
+so `replay/web.py` caps live runs: one at a time, a two-minute per-client
+cooldown, and an hourly ceiling. When the cap is hit the page says so and falls
+back to the recorded run. Adjust the constants at the top of that file if you
+are running it privately.
 
 ## The demo repository
 
@@ -113,4 +145,8 @@ replay/
 
 ## License
 
-Apache-2.0.
+Licensed under the **Apache License, Version 2.0**. See [LICENSE](LICENSE) for
+the full text.
+
+You may obtain a copy of the License at
+<http://www.apache.org/licenses/LICENSE-2.0>.
