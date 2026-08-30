@@ -115,6 +115,30 @@ cooldown, and an hourly ceiling. When the cap is hit the page says so and falls
 back to the recorded run. Adjust the constants at the top of that file if you
 are running it privately.
 
+## Deploying it
+
+Replay ships a `Dockerfile` and reads its port from `$PORT`, so the same image
+runs on Hugging Face Spaces, Fly, Cloud Run, ECS, or a laptop.
+
+**Hugging Face Spaces**, which is what the live demo uses:
+
+1. Create a Space at <https://huggingface.co/new-space> with **SDK: Docker**
+2. In the Space's **Settings -> Variables and secrets**, add `AWS_ACCESS_KEY_ID`,
+   `AWS_SECRET_ACCESS_KEY` and `AWS_REGION` as **secrets**. The container needs
+   its own credentials; it cannot use yours.
+3. `git remote add space https://huggingface.co/spaces/<user>/<space>`
+4. `./scripts/deploy_space.sh`
+
+The Space needs a `README.md` with configuration frontmatter at its root, which
+would collide with this one. `deploy_space.sh` handles that by building a
+throwaway `space` branch with the card from `deploy/huggingface/README.md`,
+pushing it, and returning you to your working branch.
+
+**Keeping it warm.** Free hosting sleeps when idle. `.github/workflows/keep-warm.yml`
+pings `/healthz` every ten minutes so a visitor never lands on a cold start. Set
+the repository variable `DEMO_URL` to the deployed base URL under
+**Settings -> Secrets and variables -> Actions -> Variables**.
+
 ## The demo repository
 
 `demo-repo/acmepay` is a small payments application with a deliberately
