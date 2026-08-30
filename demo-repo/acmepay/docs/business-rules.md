@@ -2,7 +2,7 @@
 
 These rules are contractual. Changes require finance and legal sign-off.
 
-## BR-101 — Standard transaction fee
+## BR-101 - Standard transaction fee
 
 Card payments are charged a standard transaction fee of **2.5%** of the
 transaction amount, rounded half-up to two decimal places.
@@ -10,7 +10,7 @@ transaction amount, rounded half-up to two decimal places.
 Owner: Payments
 Implemented in: `core/config.py`, `services/payment_service.py`
 
-## BR-207 — Refund fee is contractually fixed
+## BR-207 - Refund fee is contractually fixed
 
 When a payment is refunded, AcmePay retains a refund fee of **2.5%**.
 
@@ -21,7 +21,7 @@ change with it. Amending BR-207 requires renegotiating the merchant contract.
 Owner: Legal
 Implemented in: `services/refund_service.py`
 
-## BR-310 — Legacy plan billing
+## BR-310 - Legacy plan billing
 
 Merchants on the `legacy-2019` and `legacy-enterprise` plans are billed
 through the legacy billing engine ported from the mainframe in 2019, not
@@ -35,7 +35,7 @@ to the legacy engine separately.
 Owner: Platform
 Implemented in: `services/legacy_billing.py`, `services/billing_service.py`
 
-## BR-415 — Settlement rounding
+## BR-415 - Settlement rounding
 
 All monetary arithmetic rounds half-up to two decimal places via
 `core/money.py`. No service may implement its own rounding.

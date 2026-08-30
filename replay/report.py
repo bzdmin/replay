@@ -13,7 +13,14 @@ from .pipeline import RehearsalReport
 # Models reach for em and en dashes constantly. Normalise them to a plain
 # hyphen on the way out so the page reads consistently, whatever the agents
 # happened to write this run.
-_DASHES = {"—": "-", "–": "-", "−": "-"}
+# Written as escapes on purpose. Spelled literally, a find-and-replace over the
+# repository strips the characters out of the table that replaces them, and the
+# filter silently becomes a no-op.
+_DASHES = {
+    "—": "-",  # em dash
+    "–": "-",  # en dash
+    "−": "-",  # minus sign
+}
 
 
 def clean(text: Any) -> Any:

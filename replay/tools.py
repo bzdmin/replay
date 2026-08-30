@@ -1,7 +1,7 @@
 """Strands tools for investigating a target repository.
 
 These are the agents' hands. Every one of them reads real files from the
-target repository — none of them ask a model what a file probably contains.
+target repository - none of them ask a model what a file probably contains.
 
 They are built by a factory bound to a repository root so the same tool set
 can be pointed at any checkout, and so each function stays directly callable
