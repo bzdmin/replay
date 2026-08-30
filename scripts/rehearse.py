@@ -119,7 +119,8 @@ def main(argv: list[str]) -> int:
                 print(f"      evidence: {e}")
             print()
 
-    print(f"  {report.executions} real executions across 2 sandboxes\n")
+    print(f"  {report.executions} real executions across 2 sandboxes")
+    print(f"  {report.usage.describe()}\n")
     return 0
 
 

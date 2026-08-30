@@ -47,6 +47,40 @@ def _is_unresolvable(result: ScenarioResult) -> bool:
     )
 
 
+# Bedrock on-demand pricing for the model this runs on, in dollars per million
+# tokens. Used only to report what a rehearsal cost; nothing depends on it.
+_PRICE_IN = 5.0
+_PRICE_OUT = 25.0
+
+
+@dataclass
+class Usage:
+    """What a rehearsal actually consumed."""
+
+    input_tokens: int = 0
+    output_tokens: int = 0
+
+    def add(self, agent: object) -> None:
+        """Accumulate one agent's usage after it has finished working."""
+        metrics = getattr(agent, "event_loop_metrics", None)
+        used = getattr(metrics, "accumulated_usage", None) or {}
+        self.input_tokens += int(used.get("inputTokens", 0) or 0)
+        self.output_tokens += int(used.get("outputTokens", 0) or 0)
+
+    @property
+    def cost_usd(self) -> float:
+        return (
+            self.input_tokens / 1_000_000 * _PRICE_IN
+            + self.output_tokens / 1_000_000 * _PRICE_OUT
+        )
+
+    def describe(self) -> str:
+        return (
+            f"{self.input_tokens:,} in / {self.output_tokens:,} out tokens, "
+            f"about ${self.cost_usd:.2f}"
+        )
+
+
 @dataclass
 class RehearsalReport:
     request: str
@@ -59,6 +93,7 @@ class RehearsalReport:
     after: dict[str, ScenarioResult] = field(default_factory=dict)
     divergences: list[Divergence] = field(default_factory=list)
     verification: VerificationReport | None = None
+    usage: Usage = field(default_factory=Usage)
 
     @property
     def changed(self) -> list[Divergence]:
@@ -83,6 +118,7 @@ async def rehearse_change(
 ) -> RehearsalReport:
     """Run one full rehearsal of a proposed change."""
     repo = Path(repo).resolve()
+    usage = Usage()
 
     # 1. What does this change touch?
     #
@@ -106,6 +142,7 @@ async def rehearse_change(
         "repository. Each edit's `find` text must be copied verbatim from a file "
         "you read.",
     )
+    usage.add(agent)
     progress(
         "impact",
         f"{len(impact.edits)} edit(s), {len(impact.affected_components)} component(s), "
@@ -142,6 +179,7 @@ async def rehearse_change(
         "definitions you have actually read. Module paths are relative to the "
         "repository root, e.g. 'services.payment_service'.",
     )
+    usage.add(agent)
 
     scenarios = [
         Scenario(
@@ -206,6 +244,7 @@ async def rehearse_change(
         before=before,
         after=after,
         divergences=divergences,
+        usage=usage,
     )
 
     # 6. Challenge the result.
@@ -218,6 +257,8 @@ async def rehearse_change(
         "Now report your findings. Every claim needs evidence you actually "
         "read - a file:line reference or a business rule id.",
     )
+    usage.add(agent)
+    progress("verify", f"cost of this rehearsal: {usage.describe()}")
     progress(
         "verify",
         f"risk={report.verification.overall_risk}, "

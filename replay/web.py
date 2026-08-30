@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import time
 from collections import deque
 from pathlib import Path
@@ -41,10 +42,12 @@ PER_IP_COOLDOWN_S = 45
 
 GLOBAL_HOURLY_LIMIT = 30
 
-# A hard lifetime ceiling on live runs. The hourly limit protects against a
-# burst; this protects the credit balance against a slow, patient drain over
-# the weeks the demo is public.
-TOTAL_RUN_BUDGET = 400
+# A hard lifetime ceiling on spend, in dollars. Measured: a rehearsal costs
+# about $0.58 in Bedrock tokens. The hourly limit stops a burst; this stops a
+# slow drain over the weeks the demo stays public, and it is denominated in
+# money rather than runs so it stays honest if the cost per run changes.
+# Override with REPLAY_SPEND_BUDGET_USD.
+TOTAL_SPEND_BUDGET_USD = float(os.environ.get("REPLAY_SPEND_BUDGET_USD", "20"))
 
 MAX_REQUEST_CHARS = 300
 
@@ -57,7 +60,7 @@ HEARTBEAT_S = 10
 _running = asyncio.Semaphore(MAX_CONCURRENT)
 _last_seen: dict[str, float] = {}
 _recent: deque[float] = deque(maxlen=GLOBAL_HOURLY_LIMIT)
-_total_runs = 0
+_spent_usd = 0.0
 
 app = FastAPI(title="Replay", docs_url=None, redoc_url=None)
 
@@ -66,11 +69,11 @@ def _rate_limited(ip: str) -> str | None:
     """Return a human-readable refusal, or None if the request may proceed."""
     now = time.time()
 
-    if _total_runs >= TOTAL_RUN_BUDGET:
+    if _spent_usd >= TOTAL_SPEND_BUDGET_USD:
         return (
-            "This demo has used up its budget for live rehearsals. Everything "
-            "below is a real recorded run, and the repository has instructions "
-            "for running your own."
+            "This demo has used up its budget for live rehearsals. The run shown "
+            "below is real, and the repository has instructions for running "
+            "Replay against your own code."
         )
 
     while _recent and now - _recent[0] > 3600:
@@ -141,8 +144,6 @@ async def rehearse(request: Request, change: str = "") -> StreamingResponse:
             )
             return
 
-        global _total_runs
-        _total_runs += 1
         _last_seen[ip] = time.time()
         _recent.append(time.time())
 
@@ -152,8 +153,10 @@ async def rehearse(request: Request, change: str = "") -> StreamingResponse:
             queue.put_nowait(("progress", {"stage": stage, "detail": detail}))
 
         async def run() -> None:
+            global _spent_usd
             try:
                 report = await rehearse_change(REPO, change, progress)
+                _spent_usd += report.usage.cost_usd
                 await queue.put(("report", report_to_dict(report)))
             except Exception as exc:  # noqa: BLE001 - surfaced to the browser
                 await queue.put(
