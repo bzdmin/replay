@@ -35,6 +35,12 @@ PER_IP_COOLDOWN_S = 120
 GLOBAL_HOURLY_LIMIT = 25
 MAX_REQUEST_CHARS = 300
 
+# The verifier reads code for minutes without emitting progress. With no bytes
+# on the wire, hosting proxies reset the connection and the browser never sees
+# the result. An SSE comment every few seconds keeps it open and is ignored by
+# the EventSource client.
+HEARTBEAT_S = 10
+
 _running = asyncio.Semaphore(MAX_CONCURRENT)
 _last_seen: dict[str, float] = {}
 _recent: deque[float] = deque(maxlen=GLOBAL_HOURLY_LIMIT)
@@ -130,7 +136,18 @@ async def rehearse(request: Request, change: str = "") -> StreamingResponse:
             task = asyncio.create_task(run())
             try:
                 while True:
-                    event, payload = await queue.get()
+                    try:
+                        event, payload = await asyncio.wait_for(
+                            queue.get(), timeout=HEARTBEAT_S
+                        )
+                    except asyncio.TimeoutError:
+                        # Nothing to report yet. Keep the connection alive.
+                        yield ": keepalive\n\n"
+                        if await request.is_disconnected():
+                            task.cancel()
+                            break
+                        continue
+
                     if event == "done":
                         break
                     yield _sse(event, payload)

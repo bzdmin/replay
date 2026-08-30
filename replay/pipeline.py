@@ -209,9 +209,10 @@ async def rehearse_change(
     )
 
     # 6. Challenge the result.
-    progress("verify", "attempting to disprove the conclusion")
+    progress("verify", "reading the code and rules to challenge the result")
     agent = verifier_agent(repo)
     await agent.invoke_async(_verification_brief(report))
+    progress("verify", "writing up the findings with evidence")
     report.verification = await agent.structured_output_async(
         VerificationReport,
         "Now report your findings. Every claim needs evidence you actually "
