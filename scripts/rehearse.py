@@ -2,6 +2,14 @@
 
     python scripts/rehearse.py "Change the transaction fee from 2.5% to 2%"
 
+Point it at your own code with --repo:
+
+    python scripts/rehearse.py --repo path/to/your/project "Change the retry limit to 5"
+
+Replay works where behaviour can be executed, intent is written down, and the
+behaviour is reachable in a single call. Pricing, fees, billing and policy
+logic fit well. Behaviour that needs setup first does not, yet.
+
 Requires AWS credentials with Amazon Bedrock model access. See README.
 """
 
@@ -42,16 +50,31 @@ def progress(stage: str, detail: str) -> None:
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) < 2:
+    args = argv[1:]
+    repo = REPO
+
+    if "--repo" in args:
+        i = args.index("--repo")
+        try:
+            repo = Path(args[i + 1]).expanduser().resolve()
+        except IndexError:
+            print("--repo needs a path")
+            return 2
+        del args[i : i + 2]
+        if not repo.is_dir():
+            print(f"not a directory: {repo}")
+            return 2
+
+    if not args:
         print(__doc__)
         return 2
 
-    request = " ".join(argv[1:])
+    request = " ".join(args)
     print(f"\n  Proposed change: {request}")
-    print(f"  Repository: {REPO.name}")
+    print(f"  Repository: {repo}")
     print(f"\n{models.describe()}\n")
 
-    report = rehearse_change_sync(REPO, request, progress)
+    report = rehearse_change_sync(repo, request, progress)
 
     print("\n  BEHAVIOURAL DIFF\n")
     if report.divergences:

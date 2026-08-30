@@ -197,9 +197,14 @@
 // features. Presets are chosen to show two different shapes of result:
 // a change that breaks two contracts, and a change that turns out safe
 // but surfaces a subtle arithmetic difference.
+// Each preset has been run and produces a different shape of result:
+//   1. the change leaks into a contract and fails to reach a duplicate
+//   2. the change is safe, but exposes a cent-level arithmetic difference
+//   3. every prediction is correct, and the change is forbidden anyway
 const PRESETS = [
   "Change the standard transaction fee from 2.5% to 2%",
   "Move legacy-enterprise merchants onto the modern billing path",
+  "Change money rounding from ROUND_HALF_UP to ROUND_DOWN",
 ];
 
 const $ = id => document.getElementById(id);
