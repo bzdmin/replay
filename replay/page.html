@@ -54,6 +54,29 @@
          color:var(--muted);font-size:13.5px;line-height:1.6}
   .about strong{color:var(--text);font-weight:600}
 
+  /* The whole product in about five seconds, before anyone is asked to click
+     anything. Static, always the same example. */
+  .preview{max-width:660px;margin:0 auto 34px;text-align:center}
+  .pv-cap{font-size:11px;letter-spacing:1.3px;text-transform:uppercase;
+          color:var(--dim);font-weight:700;margin-bottom:14px}
+  .pv-change{font-family:var(--mono);font-size:15px;color:var(--text);
+             border:1px solid var(--border);border-radius:8px;padding:11px 18px;
+             display:inline-block;background:var(--panel)}
+  .pv-change b{color:var(--indigo);font-weight:600}
+  .pv-arrow{color:var(--dim);font-size:17px;line-height:1;margin:9px 0}
+  .pv-out{border:1px solid var(--border);border-radius:9px;background:var(--panel);
+          padding:14px 18px;text-align:left;display:inline-block;min-width:min(100%,520px)}
+  .pv-line{font-size:14px;padding:4px 0;color:var(--muted);display:flex;gap:10px}
+  .pv-line i{font-style:normal;width:14px;flex:none}
+  .pv-line.ok i{color:var(--green)}
+  .pv-line.bad i{color:var(--red)}
+  .pv-line.bad{color:var(--text)}
+  .pv-line.gap i{color:var(--amber)}
+  .pv-line.gap{color:var(--text)}
+  .pv-verdict{font-size:14.5px;font-weight:600;color:var(--red)}
+  .pv-verdict small{display:block;font-weight:400;font-size:13px;color:var(--dim);
+                    margin-top:4px}
+
   #progress{display:none;margin-top:22px;padding-top:18px;border-top:1px solid var(--border)}
   .step{display:flex;align-items:center;gap:12px;padding:6px 0;font-size:14px;
         font-family:var(--mono);color:var(--dim);transition:color .2s}
@@ -217,11 +240,25 @@
   <h1>Replay</h1>
   <div class="tag">Rehearse a change before you ship it.</div>
   <div class="built">
-    Agents execute your system before and after a proposed change, compare what
-    actually happened, and a verifier tries to prove the result wrong.
-    Built with the Strands Agents SDK on Amazon Bedrock.
+    Replay runs the same scenarios against your current and your proposed
+    behaviour, compares what actually happened, then has a verifier challenge
+    the result. Built with the Strands Agents SDK on Amazon Bedrock.
   </div>
 </header>
+
+<div class="preview">
+  <div class="pv-cap">What a rehearsal finds</div>
+  <div class="pv-change">Transaction fee <b>2.5% &rarr; 2%</b>, one line, one file</div>
+  <div class="pv-arrow">&darr;</div>
+  <div class="pv-out">
+    <div class="pv-line ok"><i>&#10003;</i> Payment path changed, exactly as intended</div>
+    <div class="pv-line bad"><i>&#9888;</i> Refund path changed too, and a contract fixes it at 2.5%</div>
+    <div class="pv-line gap"><i>&#9888;</i> Legacy billing never changed, though the same rule governs it</div>
+  </div>
+  <div class="pv-arrow">&darr;</div>
+  <div class="pv-verdict">Two contract violations, in opposite directions.
+    <small>Neither appears in the diff. Neither throws an error.</small></div>
+</div>
 
 <div class="card">
   <textarea id="change" spellcheck="false"
