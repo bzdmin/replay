@@ -1,8 +1,14 @@
 name: Keep the demo warm
 
 # Free hosting sleeps when idle, and a judge should not land on a cold start.
-# This pings the health endpoint every ten minutes. It hits /healthz, which
-# does no work and costs nothing, rather than the page or a rehearsal.
+# This pings the health endpoint, which does no work and costs nothing, rather
+# than the page or a rehearsal.
+#
+# DO NOT RELY ON THIS ALONE. GitHub deprioritises scheduled workflows on free
+# repositories: a */10 schedule measured five runs in eighteen hours, and the
+# host spins down after fifteen minutes idle. Use an external uptime pinger
+# (UptimeRobot, cron-job.org) as the primary keep-warm and treat this as a
+# backup that also proves the deployment is reachable from outside.
 #
 # Set the repository variable DEMO_URL to the deployed base URL
 # (Settings -> Secrets and variables -> Actions -> Variables).

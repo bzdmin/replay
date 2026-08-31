@@ -136,10 +136,19 @@ Google Cloud Run, which gives a full vCPU on its free tier, and
 `scripts/deploy_space.sh` for Hugging Face Spaces, which now requires a paid
 plan for Docker.
 
-**Keeping it warm.** Free hosting sleeps when idle. `.github/workflows/keep-warm.yml`
-pings `/healthz` every ten minutes so a visitor never lands on a cold start. Set
-the repository variable `DEMO_URL` to the deployed base URL under
-**Settings -> Secrets and variables -> Actions -> Variables**.
+**Keeping it warm.** Free hosting sleeps after about fifteen minutes idle, and a
+cold start costs a visitor the best part of a minute.
+
+Use an external uptime pinger against `/healthz` every five to ten minutes.
+UptimeRobot and cron-job.org both do this free, and an uptime monitor also tells
+you when the demo is down, which matters if people are looking at it while you
+are not.
+
+`.github/workflows/keep-warm.yml` does the same thing on a schedule, but treat
+it as a backup rather than the mechanism: GitHub deprioritises scheduled
+workflows on free repositories, and a `*/10` schedule was measured running five
+times in eighteen hours. Set the repository variable `DEMO_URL` to the deployed
+base URL under **Settings -> Secrets and variables -> Actions -> Variables**.
 
 ## The demo repository
 
