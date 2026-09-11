@@ -1,0 +1,319 @@
+{
+  "request": "Change money rounding from ROUND_HALF_UP to ROUND_DOWN",
+  "impact": {
+    "edits": [
+      {
+        "path": "core/money.py",
+        "find": "from decimal import Decimal, ROUND_HALF_UP",
+        "replace": "from decimal import Decimal, ROUND_DOWN",
+        "rationale": "Change the import to bring in ROUND_DOWN instead of ROUND_HALF_UP, as requested."
+      },
+      {
+        "path": "core/money.py",
+        "find": "    return Decimal(value).quantize(CENTS, rounding=ROUND_HALF_UP)",
+        "replace": "    return Decimal(value).quantize(CENTS, rounding=ROUND_DOWN)",
+        "rationale": "Apply the new rounding mode at the single call site where rounding is performed."
+      }
+    ],
+    "affected_components": [
+      "core/money.py",
+      "services/payment_service.py",
+      "services/billing_service.py",
+      "services/refund_service.py",
+      "services/legacy_billing.py"
+    ],
+    "suspected_duplicates": [
+      "core/money.py line 4 - comment \"Finance signed off on ROUND_HALF_UP in 2021.\" still names the old rounding mode and will be stale after the edit.",
+      "core/money.py line 13 - docstring \"Quantise a value to two decimal places using banker-approved rounding.\" describes ROUND_HALF_UP semantics; ROUND_DOWN is not banker rounding.",
+      "docs/business-rules.md line 8 (BR-101) - prose says \"rounded half-up to two decimal places\"; will no longer match the code.",
+      "docs/business-rules.md lines 38-41 (BR-415) - contractual rule states \"All monetary arithmetic rounds half-up to two decimal places via core/money.py.\" The document header warns these rules are contractual and require finance and legal sign-off. This edit silently violates BR-415.",
+      "services/legacy_billing.py line 19 - compute_fee_minor uses integer floor-division (//), which is already a form of truncation. The bridge functions to_minor_units and from_minor_units in core/money.py both call to_money, so changing the rounding mode alters the values that flow into and out of the legacy engine, potentially breaking reconciliation with historical mainframe statements (see BR-310).",
+      "services/refund_service.py - calculate_refund_fee calls to_money and will silently inherit ROUND_DOWN. Refund fees are governed by BR-207, a separate contractual obligation owned by Legal. The merchant master agreement may require half-up rounding independently of any change to BR-101 or BR-415."
+    ],
+    "notes": "core/money.py:to_money is the single rounding chokepoint for the entire platform (enforced by BR-415). Every service that touches money - payment_service.calculate_fee, payment_service.net_settlement, billing_service.bill_transaction, refund_service.calculate_refund_fee, refund_service.refund_amount, and the to_minor_units/from_minor_units bridge into legacy_billing - flows through this one function. Changing it from ROUND_HALF_UP to ROUND_DOWN will therefore alter computed amounts across every monetary path in the system.\n\nNo tests were found for to_money, ROUND_HALF_UP, calculate_fee, rounding, or money anywhere in the repository, so there is zero automated coverage to catch the behavioural change.\n\nTwo contractual business rules (BR-415 owned by Finance, BR-207 owned by Legal) and one standard rule (BR-101 owned by Payments) all document or depend on half-up rounding. The edit updates none of the documentation or business-rule text."
+  },
+  "applied": [
+    {
+      "path": "core/money.py",
+      "occurrences": 1
+    },
+    {
+      "path": "core/money.py",
+      "occurrences": 1
+    }
+  ],
+  "divergences": [
+    {
+      "id": "to_money_canonical_rounding",
+      "name": "Direct call to to_money with a value (2.49975) whose third decimal \u2265 5, isolating the canonical rounding site",
+      "call": "core.money.to_money",
+      "kwargs": {
+        "value": "2.49975"
+      },
+      "predicted": "changed",
+      "because": "BR-415 states 'All monetary arithmetic rounds half-up to two decimal places via core/money.py.' The proposed change alters the rounding mode inside to_money from ROUND_HALF_UP to ROUND_DOWN, so this canonical definition must move.",
+      "before": "2.50",
+      "after": "2.49",
+      "verdict": "changed",
+      "outcome": "confirmed effect",
+      "surprising": false,
+      "duration_ms": 121
+    },
+    {
+      "id": "to_money_exact_value_stable",
+      "name": "Direct call to to_money with a value already exact to two decimals (1.25) - no rounding needed",
+      "call": "core.money.to_money",
+      "kwargs": {
+        "value": "1.25"
+      },
+      "predicted": "unchanged",
+      "because": "1.25 is already quantised to two decimal places. Neither ROUND_HALF_UP nor ROUND_DOWN alters it; no rounding rule can affect a value that needs no rounding.",
+      "before": "1.25",
+      "after": "1.25",
+      "verdict": "unchanged",
+      "outcome": "contained",
+      "surprising": false,
+      "duration_ms": 99
+    },
+    {
+      "id": "to_minor_units_rounding",
+      "name": "to_minor_units('99.995') - the to_money call inside changes from 100.00\u219210000 to 99.99\u21929999",
+      "call": "core.money.to_minor_units",
+      "kwargs": {
+        "value": "99.995"
+      },
+      "predicted": "changed",
+      "because": "BR-415 mandates all monetary arithmetic goes through core/money.py. to_minor_units delegates to to_money, so the rounding mode change governs it.",
+      "before": "10000",
+      "after": "9999",
+      "verdict": "changed",
+      "outcome": "confirmed effect",
+      "surprising": false,
+      "duration_ms": 95
+    },
+    {
+      "id": "payment_calculate_fee",
+      "name": "payment_service.calculate_fee(99.99) - fee is 99.99\u00d70.025=2.49975, rounding-sensitive",
+      "call": "services.payment_service.calculate_fee",
+      "kwargs": {
+        "amount": "99.99"
+      },
+      "predicted": "changed",
+      "because": "BR-101 says the transaction fee is 'rounded half-up to two decimal places'. BR-415 centralises that rounding in core/money.py. Changing the rounding mode governs this path.",
+      "before": "2.50",
+      "after": "2.49",
+      "verdict": "changed",
+      "outcome": "confirmed effect",
+      "surprising": false,
+      "duration_ms": 137
+    },
+    {
+      "id": "payment_net_settlement",
+      "name": "payment_service.net_settlement(99.99) - exercises to_money on the subtraction result as well",
+      "call": "services.payment_service.net_settlement",
+      "kwargs": {
+        "amount": "99.99"
+      },
+      "predicted": "changed",
+      "because": "BR-415 governs all monetary rounding through core/money.py. net_settlement calls to_money twice (once via calculate_fee, once directly on the net amount).",
+      "before": "97.49",
+      "after": "97.50",
+      "verdict": "changed",
+      "outcome": "confirmed effect",
+      "surprising": false,
+      "duration_ms": 99
+    },
+    {
+      "id": "refund_fee_br207",
+      "name": "refund_service.calculate_refund_fee(99.99) - fee is 2.49975, governed by BR-207 for rate but BR-415 for rounding",
+      "call": "services.refund_service.calculate_refund_fee",
+      "kwargs": {
+        "amount": "99.99"
+      },
+      "predicted": "changed",
+      "because": "BR-207 fixes the refund fee RATE independently of BR-101, but says nothing about its own rounding mode. Rounding is governed by BR-415: 'All monetary arithmetic rounds half-up to two decimal places via core/money.py. No service may implement its own rounding.' The rounding mode change therefore governs this path.",
+      "before": "2.50",
+      "after": "2.49",
+      "verdict": "changed",
+      "outcome": "confirmed effect",
+      "surprising": false,
+      "duration_ms": 108
+    },
+    {
+      "id": "billing_modern_plan",
+      "name": "billing_service.bill_transaction(99.99, 'standard') - modern billing path, same arithmetic as payment_service",
+      "call": "services.billing_service.bill_transaction",
+      "kwargs": {
+        "amount": "99.99",
+        "merchant_plan": "standard"
+      },
+      "predicted": "changed",
+      "because": "BR-415 governs rounding for all monetary arithmetic through core/money.py. The modern billing path calls to_money directly.",
+      "before": "2.50",
+      "after": "2.49",
+      "verdict": "changed",
+      "outcome": "confirmed effect",
+      "surprising": false,
+      "duration_ms": 106
+    },
+    {
+      "id": "billing_legacy_plan",
+      "name": "billing_service.bill_transaction('99.995', 'legacy-2019') - legacy path where to_minor_units/from_minor_units bridge through to_money",
+      "call": "services.billing_service.bill_transaction",
+      "kwargs": {
+        "amount": "99.995",
+        "merchant_plan": "legacy-2019"
+      },
+      "predicted": "changed",
+      "because": "BR-415 governs rounding in core/money.py. The legacy billing bridge uses to_minor_units and from_minor_units, both of which call to_money. BR-310 isolates the legacy engine's own fee RATE and integer arithmetic, but the bridge functions are core/money.py and fall under BR-415.",
+      "before": "2.50",
+      "after": "2.49",
+      "verdict": "changed",
+      "outcome": "confirmed effect",
+      "surprising": false,
+      "duration_ms": 102
+    },
+    {
+      "id": "legacy_compute_fee_minor_isolated",
+      "name": "legacy_billing.compute_fee_minor(10000) - pure integer floor-division, never calls to_money",
+      "call": "services.legacy_billing.compute_fee_minor",
+      "kwargs": {
+        "amount_minor": 10000
+      },
+      "predicted": "unchanged",
+      "because": "BR-310 says 'the legacy engine holds its own copy of the fee rate, expressed in basis points against integer minor units'. compute_fee_minor uses integer floor-division (//), never calling core/money.py. BR-415's rounding mode does not govern pure-integer mainframe arithmetic.",
+      "before": "250",
+      "after": "250",
+      "verdict": "unchanged",
+      "outcome": "contained",
+      "surprising": false,
+      "duration_ms": 91
+    },
+    {
+      "id": "legacy_describe_rate_stable",
+      "name": "legacy_billing.describe_rate() - string formatting from _FEE_BASIS_POINTS, no core/money involvement",
+      "call": "services.legacy_billing.describe_rate",
+      "kwargs": {},
+      "predicted": "unchanged",
+      "because": "BR-310 governs the legacy engine's own rate display. describe_rate formats _FEE_BASIS_POINTS as a string and never calls any core/money.py function.",
+      "before": "2.50%",
+      "after": "2.50%",
+      "verdict": "unchanged",
+      "outcome": "contained",
+      "surprising": false,
+      "duration_ms": 88
+    },
+    {
+      "id": "billing_statement_rate_stable",
+      "name": "billing_service.statement_rate('standard') - string formatting of STANDARD_FEE_RATE, no to_money call",
+      "call": "services.billing_service.statement_rate",
+      "kwargs": {
+        "merchant_plan": "standard"
+      },
+      "predicted": "unchanged",
+      "because": "statement_rate uses Python string formatting on STANDARD_FEE_RATE; it never calls core/money.py rounding functions. The rounding mode change does not govern string formatting of the rate constant.",
+      "before": "2.50%",
+      "after": "2.50%",
+      "verdict": "unchanged",
+      "outcome": "contained",
+      "surprising": false,
+      "duration_ms": 103
+    }
+  ],
+  "surprises": [],
+  "discarded": [],
+  "verification": {
+    "overall_risk": "high",
+    "summary": "The change from ROUND_HALF_UP to ROUND_DOWN in core/money.py silently violates four contractual business rules (BR-101, BR-207, BR-310, BR-415), all of which are governed by a document header requiring finance and legal sign-off. Every rounding-sensitive code path now produces lower monetary amounts, and the business-rules documentation was not updated, leaving the system internally inconsistent between code and its governing contracts.",
+    "challenges": [
+      {
+        "scenario_id": "to_money_canonical_rounding",
+        "severity": "critical",
+        "claim": "BR-415 is directly violated. The rule states 'All monetary arithmetic rounds half-up to two decimal places via core/money.py.' The edit changes core/money.py:14 to use ROUND_DOWN, which is truncation, not half-up rounding. The document header at docs/business-rules.md:3 states these rules are contractual and require finance and legal sign-off. No such sign-off is evidenced.",
+        "rule_violated": "BR-415",
+        "evidence": [
+          "docs/business-rules.md:38-41 - BR-415 text: 'All monetary arithmetic rounds half-up to two decimal places via core/money.py.'",
+          "docs/business-rules.md:3 - 'These rules are contractual. Changes require finance and legal sign-off.'",
+          "core/money.py:14 - the sole implementation site: return Decimal(value).quantize(CENTS, rounding=ROUND_HALF_UP)"
+        ]
+      },
+      {
+        "scenario_id": "payment_calculate_fee",
+        "severity": "critical",
+        "claim": "BR-101 is violated. The rule explicitly includes the rounding method as part of its definition: 'rounded half-up to two decimal places.' The scenarios payment_calculate_fee and billing_modern_plan both show the fee for 99.99 changing from 2.50 to 2.49, which is no longer half-up rounding of the intermediate value 2.49975.",
+        "rule_violated": "BR-101",
+        "evidence": [
+          "docs/business-rules.md:7-8 - BR-101: 'charged a standard transaction fee of 2.5% of the transaction amount, rounded half-up to two decimal places.'",
+          "services/payment_service.py:14 - calculate_fee calls to_money(Decimal(str(amount)) * STANDARD_FEE_RATE)",
+          "Scenario payment_calculate_fee: 2.50 -> 2.49",
+          "Scenario billing_modern_plan: 2.50 -> 2.49"
+        ]
+      },
+      {
+        "scenario_id": "refund_fee_br207",
+        "severity": "critical",
+        "claim": "BR-207 is violated. The refund fee is 'fixed by the merchant master agreement' and 'Amending BR-207 requires renegotiating the merchant contract.' The refund_service calls to_money at line 19, so the rounding change alters the actual dollar amount retained (2.50 -> 2.49). Changing the monetary outcome without contract renegotiation violates BR-207's ownership and amendment clause.",
+        "rule_violated": "BR-207",
+        "evidence": [
+          "docs/business-rules.md:14-19 - BR-207: 'fixed by the merchant master agreement', 'Amending BR-207 requires renegotiating the merchant contract.'",
+          "services/refund_service.py:19 - return to_money(Decimal(str(amount)) * STANDARD_FEE_RATE)",
+          "Scenario refund_fee_br207: 2.50 -> 2.49"
+        ]
+      },
+      {
+        "scenario_id": "billing_legacy_plan",
+        "severity": "critical",
+        "claim": "BR-310 reconciliation is broken. The legacy billing path in billing_service.py:17-18 bridges through to_minor_units and from_minor_units, both of which call to_money (core/money.py:19, :24). Changing the rounding mode alters the input fed into the legacy integer engine: to_minor_units('99.995') now yields 9999 instead of 10000 because to_money rounds 99.995 down to 99.99. The legacy engine's own integer arithmetic is unchanged (scenario legacy_compute_fee_minor_isolated: 250 -> 250), but the values flowing through the bridge are different, so reconciliation against historical mainframe statements will fail.",
+        "rule_violated": "BR-310",
+        "evidence": [
+          "docs/business-rules.md:30-32 - BR-310: 'reconciliation against historical statements still balances'",
+          "core/money.py:18-19 - to_minor_units calls to_money",
+          "core/money.py:23-24 - from_minor_units calls to_money",
+          "services/billing_service.py:17-18 - legacy path: minor = to_minor_units(amount); return from_minor_units(legacy_billing.compute_fee_minor(minor))",
+          "Scenario to_minor_units_rounding: 10000 -> 9999",
+          "Scenario billing_legacy_plan: 2.50 -> 2.49"
+        ]
+      },
+      {
+        "scenario_id": "payment_net_settlement",
+        "severity": "high",
+        "claim": "The net settlement amount shifts in the merchant's favour (97.49 -> 97.50) because the fee is rounded down. This compounds the BR-101/BR-415 violations: AcmePay systematically under-collects fees on every rounding-sensitive transaction. Over large volumes this is a material revenue loss.",
+        "rule_violated": "BR-101",
+        "evidence": [
+          "services/payment_service.py:18 - net_settlement subtracts calculate_fee result then calls to_money",
+          "Scenario payment_net_settlement: 97.49 -> 97.50"
+        ]
+      },
+      {
+        "scenario_id": null,
+        "severity": "medium",
+        "claim": "Stale documentation and code comments were not updated by the edit. core/money.py:4 still says 'Finance signed off on ROUND_HALF_UP in 2021', core/money.py:13 still says 'banker-approved rounding' (ROUND_DOWN is truncation, not banker rounding), docs/business-rules.md:8 (BR-101) still says 'rounded half-up', and docs/business-rules.md:40-41 (BR-415) still says 'rounds half-up'. This makes the system internally inconsistent even if one intended to change the rounding.",
+        "rule_violated": null,
+        "evidence": [
+          "core/money.py:4 - 'Finance signed off on ROUND_HALF_UP in 2021.'",
+          "core/money.py:13 - 'Quantise a value to two decimal places using banker-approved rounding.'",
+          "docs/business-rules.md:8 - 'rounded half-up to two decimal places'",
+          "docs/business-rules.md:40-41 - 'All monetary arithmetic rounds half-up to two decimal places'"
+        ]
+      },
+      {
+        "scenario_id": null,
+        "severity": "expected",
+        "claim": "The three unchanged scenarios are correct. to_money_exact_value_stable (1.25) is already exact at 2 d.p. so no rounding applies regardless of mode. legacy_compute_fee_minor_isolated uses pure integer floor-division at legacy_billing.py:19 and never calls to_money. legacy_describe_rate_stable and billing_statement_rate_stable are string formatting of constants with no to_money involvement. No missed code paths were found.",
+        "rule_violated": null,
+        "evidence": [
+          "core/money.py:14 - quantizing Decimal('1.25') to 0.01 is exact under any rounding mode",
+          "services/legacy_billing.py:19 - (int(amount_minor) * _FEE_BASIS_POINTS) // _BASIS_POINT_DIVISOR - no to_money call",
+          "services/legacy_billing.py:23 - string formatting of _FEE_BASIS_POINTS, no rounding",
+          "services/billing_service.py:25-26 - string formatting, no to_money call"
+        ]
+      }
+    ]
+  },
+  "stats": {
+    "scenarios": 11,
+    "executions": 22,
+    "changed": 7,
+    "surprises": 0
+  }
+}

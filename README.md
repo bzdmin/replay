@@ -84,8 +84,9 @@ uvicorn replay.web:app --host 0.0.0.0 --port 8000
 ```
 
 Then open <http://localhost:8000>. The page loads a previously recorded
-rehearsal immediately, and you can type your own change to run a live one and
-watch the agents work.
+rehearsal immediately. Each of the three presets opens its own recorded run
+straight away, and you can type your own change to run a live one and watch the
+agents work.
 
 **A rehearsal from the command line:**
 
@@ -101,10 +102,13 @@ and for seeing that the before/after evidence is real:
 python scripts/demo_rehearsal.py
 ```
 
-**Re-record the flagship run** shown on the web page:
+**Re-record the runs** shown on the web page. The first is the one shown on
+first paint; `--out` writes the others alongside it instead of overwriting it:
 
 ```bash
 python scripts/record_run.py
+python scripts/record_run.py --out legacy "Move legacy-enterprise merchants onto the modern billing path"
+python scripts/record_run.py --out rounding "Change money rounding from ROUND_HALF_UP to ROUND_DOWN"
 ```
 
 ### Live rehearsals are rate limited

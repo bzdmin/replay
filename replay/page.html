@@ -20,15 +20,56 @@
   .wrap{max-width:1080px;margin:0 auto;padding:0 24px 96px}
   a{color:var(--indigo)}
 
-  header{padding:56px 0 32px;border-bottom:1px solid var(--border);margin-bottom:32px}
-  h1{margin:0;font-size:34px;letter-spacing:-.5px;font-weight:700}
-  .tag{color:var(--muted);font-size:17px;margin-top:6px}
-  .built{color:var(--dim);font-size:13px;margin-top:14px}
+  /* The first screen says one thing, in words, before any number: the same
+     sentence the video opens on. */
+  .top{padding:48px 0 34px;border-bottom:1px solid var(--border);margin-bottom:34px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:2px;color:var(--dim);
+           text-transform:uppercase}
+  .eyebrow b{color:var(--indigo);font-weight:600}
+  h1{margin:18px 0 0;font-size:clamp(40px,7.2vw,78px);line-height:1.02;
+     letter-spacing:-.03em;font-weight:750}
+  h1 .broke{color:var(--red)}
+  .lede{font-size:clamp(16px,2vw,19px);color:var(--muted);max-width:720px;
+        margin:22px 0 0;line-height:1.6}
+  .lede b{color:var(--text);font-weight:600}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:28px}
+  .fcard{border:1px solid var(--border);border-left:3px solid var(--red);
+         background:var(--panel);border-radius:10px;padding:18px 20px}
+  .fcard.gap{border-left-color:var(--amber)}
+  .fcard .k{font-family:var(--mono);font-size:11px;letter-spacing:1.4px;
+            text-transform:uppercase;color:var(--red);font-weight:600}
+  .fcard.gap .k{color:var(--amber)}
+  .fcard .t{font-size:18px;font-weight:650;margin:6px 0 10px}
+  .fcard .n{font-family:var(--mono);font-size:26px;white-space:nowrap}
+  .fcard .n .b{color:var(--dim)}
+  .fcard .n .ar{color:var(--dim);font-size:18px;margin:0 8px}
+  .fcard .n .a{color:var(--red);font-weight:700}
+  .fcard.gap .n .a{color:var(--amber)}
+  .fcard .r{font-size:13.5px;color:var(--muted);margin-top:10px;line-height:1.55}
+  .fcard .r b{color:var(--text);font-family:var(--mono);font-size:12.5px;font-weight:600}
+  .proof{margin-top:20px;font-family:var(--mono);font-size:12.5px;color:var(--dim);
+         display:flex;gap:8px 22px;flex-wrap:wrap}
+  .proof b{color:var(--muted);font-weight:600}
 
   h2{font-size:13px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);
      font-weight:700;margin:40px 0 14px}
-
+  .try h2{margin-top:0}
   .card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:20px}
+
+  /* Presets are the main control. Each one opens a real recorded run at once,
+     so there is something to operate in seconds rather than minutes. */
+  .pick{color:var(--muted);font-size:14.5px;margin:0 0 14px}
+  .presets{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+  .preset{
+    text-align:left;background:var(--panel2);color:var(--text);border:1px solid var(--border);
+    border-radius:10px;padding:14px 16px;font-size:14.5px;font-weight:600;cursor:pointer;
+    font-family:inherit;line-height:1.4;transition:border-color .15s,background .15s;
+  }
+  .preset small{display:block;color:var(--muted);font-weight:400;font-size:13px;margin-top:6px}
+  .preset:hover{border-color:var(--dim)}
+  .preset.on{border-color:var(--indigo);background:rgba(129,140,248,.08)}
+  .own{margin-top:18px;padding-top:18px;border-top:1px solid var(--border)}
+  .own label{display:block;color:var(--muted);font-size:13.5px;margin-bottom:8px}
 
   textarea{
     width:100%;background:var(--panel2);color:var(--text);border:1px solid var(--border);
@@ -36,46 +77,17 @@
     min-height:64px;
   }
   textarea:focus{outline:none;border-color:var(--indigo)}
-  .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:14px}
-  button{
+  .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:12px}
+  #go{
     background:var(--indigo);color:#0b0f17;border:0;border-radius:8px;
     padding:11px 22px;font-size:15px;font-weight:650;cursor:pointer;font-family:inherit;
   }
-  button:hover:not(:disabled){filter:brightness(1.1)}
-  button:disabled{opacity:.45;cursor:not-allowed}
-  .presets{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-  .preset{
-    background:transparent;color:var(--muted);border:1px solid var(--border);
-    border-radius:999px;padding:6px 14px;font-size:13px;font-weight:500;
-  }
-  .preset:hover{color:var(--text);border-color:var(--dim);background:transparent}
-  .note{color:var(--dim);font-size:13px;margin-top:12px}
+  #go:hover:not(:disabled){filter:brightness(1.1)}
+  #go:disabled{opacity:.45;cursor:not-allowed}
+  .note{color:var(--dim);font-size:13px}
   .about{margin-top:18px;padding-top:16px;border-top:1px solid var(--border);
          color:var(--muted);font-size:13.5px;line-height:1.6}
   .about strong{color:var(--text);font-weight:600}
-
-  /* The whole product in about five seconds, before anyone is asked to click
-     anything. Static, always the same example. */
-  .preview{max-width:660px;margin:0 auto 34px;text-align:center}
-  .pv-cap{font-size:11px;letter-spacing:1.3px;text-transform:uppercase;
-          color:var(--dim);font-weight:700;margin-bottom:14px}
-  .pv-change{font-family:var(--mono);font-size:15px;color:var(--text);
-             border:1px solid var(--border);border-radius:8px;padding:11px 18px;
-             display:inline-block;background:var(--panel)}
-  .pv-change b{color:var(--indigo);font-weight:600}
-  .pv-arrow{color:var(--dim);font-size:17px;line-height:1;margin:9px 0}
-  .pv-out{border:1px solid var(--border);border-radius:9px;background:var(--panel);
-          padding:14px 18px;text-align:left;display:inline-block;min-width:min(100%,520px)}
-  .pv-line{font-size:14px;padding:4px 0;color:var(--muted);display:flex;gap:10px}
-  .pv-line i{font-style:normal;width:14px;flex:none}
-  .pv-line.ok i{color:var(--green)}
-  .pv-line.bad i{color:var(--red)}
-  .pv-line.bad{color:var(--text)}
-  .pv-line.gap i{color:var(--amber)}
-  .pv-line.gap{color:var(--text)}
-  .pv-verdict{font-size:14.5px;font-weight:600;color:var(--red)}
-  .pv-verdict small{display:block;font-weight:400;font-size:13px;color:var(--dim);
-                    margin-top:4px}
 
   #progress{display:none;margin-top:22px;padding-top:18px;border-top:1px solid var(--border)}
   .step{display:flex;align-items:center;gap:12px;padding:6px 0;font-size:14px;
@@ -93,14 +105,22 @@
   .detail{font-family:var(--mono);font-size:12.5px;color:var(--dim);
           padding:2px 0 8px 44px}
 
+  #out{scroll-margin-top:16px}
+  .ctx{color:var(--muted);font-size:14px;margin:30px 0 14px}
+  .ctx .tagr{font-family:var(--mono);font-size:11px;letter-spacing:1.2px;
+             text-transform:uppercase;color:var(--green);border:1px solid rgba(74,222,128,.35);
+             border-radius:999px;padding:2px 9px;margin-right:8px}
+
   /* The result, before any explanation of how it was reached. */
   .hero{border:1px solid var(--border);border-radius:12px;background:var(--panel2);
         padding:26px;margin-bottom:24px}
   .hero .chg{text-align:center;font-family:var(--mono);font-size:15px;color:var(--muted);
              margin-bottom:22px}
   .hero .chg b{color:var(--text)}
-  .cmp{display:grid;grid-template-columns:1fr auto 1fr auto;gap:0 16px;align-items:center;
-       max-width:640px;margin:0 auto}
+  /* Label column takes the slack; the numbers only take what they need. With
+     the after column set to 1fr, labels were squeezed to four lines on phones. */
+  .cmp{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:0 18px;
+       align-items:center;max-width:640px;margin:0 auto}
   .cmp .hd{font-size:10.5px;letter-spacing:1.3px;font-weight:800;color:var(--dim);
            text-transform:uppercase;padding-bottom:9px;border-bottom:1px solid var(--border);
            margin-bottom:6px}
@@ -110,17 +130,18 @@
   .cmp .v.a{color:var(--text);font-weight:600}
   .cmp .v.a.bad{color:var(--red)}
   .cmp .v.a.gap{color:var(--amber)}
-  .cmp .fl{font-size:15px;padding:7px 0 7px 6px;width:20px}
+  .cmp .fl{font-size:15px;padding:7px 0;width:18px}
   .verdictline{text-align:center;margin-top:22px;padding-top:18px;
                border-top:1px solid var(--border);font-size:16px;font-weight:600}
   .verdictline.bad{color:var(--red)} .verdictline.ok{color:var(--green)}
+  .verdictline.warn{color:var(--amber)}
   .verdictline small{display:block;font-weight:400;font-size:13px;color:var(--muted);
                      margin-top:5px}
 
   .fnum{display:flex;gap:14px;margin-bottom:14px}
   .fnum .idx{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--dim);
              min-width:30px;line-height:1.2}
-  .fnum .body{flex:1;border-left:3px solid var(--red);padding-left:16px}
+  .fnum .body{flex:1;min-width:0;border-left:3px solid var(--red);padding-left:16px}
   .fnum.gap .body{border-left-color:var(--amber)}
   .fnum h3{margin:0 0 10px;font-size:16.5px;font-weight:650}
   .eo{font-family:var(--mono);font-size:13.5px;margin-bottom:10px}
@@ -133,30 +154,6 @@
   .fnum.gap .rule{background:rgba(251,191,36,.08)}
   .rule b{color:var(--text);font-family:var(--mono);font-size:12.5px}
 
-  /* The experiment, made visible. This is the first thing a visitor sees and
-     it has about fifteen seconds to say: two worlds were run and compared. */
-  .exp{border:1px solid var(--border);border-radius:12px;padding:24px;background:var(--panel2);
-       margin-bottom:22px}
-  .exp .q{font-size:17px;color:var(--text);text-align:center;margin-bottom:20px}
-  .exp .q span{color:var(--indigo);font-weight:600}
-  .worlds{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:stretch}
-  .world{border:1px solid var(--border);border-radius:9px;padding:14px 16px;background:var(--panel)}
-  .world.after{border-color:var(--indigo)}
-  .world .wl{font-size:10.5px;letter-spacing:1.3px;font-weight:800;color:var(--dim);
-             text-transform:uppercase;margin-bottom:7px}
-  .world.after .wl{color:var(--indigo)}
-  .world .wd{font-size:13.5px;color:var(--muted);line-height:1.5}
-  .vs{display:flex;align-items:center;color:var(--dim);font-size:20px;padding:0 2px}
-  .expfoot{margin-top:18px;padding-top:16px;border-top:1px solid var(--border);
-           display:flex;gap:26px;flex-wrap:wrap;justify-content:center;
-           font-family:var(--mono);font-size:12.5px;color:var(--muted)}
-  .expfoot b{color:var(--text);font-weight:600}
-  .expfoot .hot{color:var(--red);font-weight:600}
-  @media(max-width:680px){
-    .worlds{grid-template-columns:1fr}
-    .vs{justify-content:center;padding:2px 0}
-  }
-
   .banner{display:flex;align-items:center;gap:16px;border-radius:10px;padding:18px 22px;
           border:1px solid;margin-bottom:18px}
   .banner .lvl{font-size:22px;font-weight:800;letter-spacing:.5px}
@@ -165,18 +162,7 @@
   .risk-low{background:rgba(74,222,128,.09);border-color:rgba(74,222,128,.4);color:var(--green)}
   .banner p{margin:0;color:var(--text);font-size:15px}
 
-  .find{border-left:3px solid var(--red);background:var(--panel);border-radius:0 8px 8px 0;
-        padding:16px 20px;margin-bottom:12px}
-  .find.under{border-left-color:var(--amber)}
-  .find .kind{font-size:11px;letter-spacing:1.3px;font-weight:800;color:var(--red);
-              text-transform:uppercase}
-  .find.under .kind{color:var(--amber)}
-  .find h3{margin:6px 0 10px;font-size:16px;font-weight:600}
-  .find .why{color:var(--muted);font-size:14px;margin:0 0 10px}
-  .obs{font-family:var(--mono);font-size:14px;color:var(--text)}
-  .obs .b{color:var(--dim)} .obs .a{color:var(--red);font-weight:600}
-  .find.under .obs .a{color:var(--amber)}
-
+  .tablewrap{overflow-x:auto}
   table{width:100%;border-collapse:collapse;font-size:14px}
   th{text-align:left;font-size:11px;letter-spacing:1.1px;text-transform:uppercase;
      color:var(--dim);font-weight:700;padding:0 10px 10px;border-bottom:1px solid var(--border)}
@@ -201,17 +187,30 @@
   .s-low,.s-expected{background:rgba(139,152,172,.13);color:var(--muted)}
   .chal p{margin:10px 0 0;font-size:14.5px}
   .ev{margin-top:12px;padding-left:14px;border-left:2px solid var(--border)}
-  .ev div{font-family:var(--mono);font-size:12.5px;color:var(--muted);padding:2px 0}
+  .ev div{font-family:var(--mono);font-size:12.5px;color:var(--muted);padding:2px 0;
+          overflow-wrap:anywhere}
 
-  details{margin-top:14px;border-top:1px solid var(--border);padding-top:14px}
-  summary{cursor:pointer;color:var(--muted);font-size:14px;font-weight:600}
-  summary:hover{color:var(--text)}
-  details pre{font-family:var(--mono);font-size:12.5px;color:var(--muted);
-              background:var(--panel2);padding:14px;border-radius:7px;overflow-x:auto}
+  /* Everything past the findings is kept, but folded. It is the evidence for
+     what is above it, and it was pushing the findings off the screen. */
+  details.fold{margin-top:14px;border:1px solid var(--border);border-radius:10px;
+               background:var(--panel2)}
+  details.fold > summary{cursor:pointer;list-style:none;padding:14px 18px;
+                         color:var(--text);font-size:14.5px;font-weight:600;
+                         display:flex;align-items:baseline;gap:14px}
+  details.fold > summary::-webkit-details-marker{display:none}
+  details.fold > summary::after{content:"Show";color:var(--indigo);font-weight:600;
+                                font-size:13.5px;flex:none}
+  details.fold[open] > summary::after{content:"Hide"}
+  details.fold > summary span{color:var(--dim);font-weight:400;margin-left:auto;
+                              font-size:13.5px;text-align:right}
+  details.fold .inner{padding:0 18px 18px}
+  details.fold pre{font-family:var(--mono);font-size:12.5px;color:var(--muted);
+                   background:var(--bg);padding:14px;border-radius:7px;overflow-x:auto;
+                   margin:0}
   .stats{color:var(--dim);font-size:13px;font-family:var(--mono);margin-top:22px;
          padding-top:16px;border-top:1px solid var(--border)}
   .err{color:var(--red);font-size:14px;margin-top:14px}
-  .ctx{color:var(--muted);font-size:14px;margin:0 0 14px}
+  .err:empty{display:none}
 
   .more{margin-top:56px;padding-top:36px;border-top:1px solid var(--border)}
   .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:22px}
@@ -226,65 +225,89 @@
   .yes{color:var(--green)} .no{color:var(--red)}
   .foot{margin-top:40px;padding-top:22px;border-top:1px solid var(--border);
         color:var(--dim);font-size:13px;display:flex;gap:20px;flex-wrap:wrap}
-  @media(max-width:640px){
-    .val{white-space:normal}
-    header{padding:36px 0 24px}
-    h1{font-size:27px}
+
+  @media(max-width:680px){
+    .two{grid-template-columns:1fr}
+    .top{padding:32px 0 26px}
+    .hero{padding:18px 14px}
+    .cmp{gap:0 10px}
+    .cmp .lbl{font-size:13px}
+    .cmp .v{font-size:14.5px}
+    .fcard .n{font-size:22px}
+    .banner{flex-direction:column;align-items:flex-start;gap:8px}
+    textarea{min-height:92px}
   }
 </style>
 </head>
 <body>
 <div class="wrap">
 
-<header>
-  <h1>Replay</h1>
-  <div class="tag">Rehearse a change before you ship it.</div>
-  <div class="built">
-    Replay runs the same scenarios against your current and your proposed
-    behaviour, compares what actually happened, then has a verifier challenge
-    the result. Built with the Strands Agents SDK on Amazon Bedrock.
+<header class="top">
+  <div class="eyebrow"><b>Replay</b> &nbsp;/&nbsp; rehearse a change before you ship it</div>
+  <h1>One line changed.<br>Two contracts <span class="broke">broke</span>.</h1>
+  <p class="lede">An engineer lowers a fee from 2.5% to 2%. The diff is one line,
+    nothing errors, and no test fails. Replay runs the code before and after the
+    change, and finds two things the diff cannot show you.</p>
+
+  <div class="two">
+    <div class="fcard">
+      <div class="k">Moved when it must not</div>
+      <div class="t">The refund fee dropped too</div>
+      <div class="n"><span class="b">25.00</span><span class="ar">&rarr;</span><span class="a">20.00</span></div>
+      <div class="r"><b>BR-207</b> fixes the refund fee at 2.5% by contract. The
+        refund service reads the same constant anyway.</div>
+    </div>
+    <div class="fcard gap">
+      <div class="k">Stayed when it must move</div>
+      <div class="t">Legacy billing never changed</div>
+      <div class="n"><span class="b">2500</span><span class="ar">&rarr;</span><span class="a">2500</span></div>
+      <div class="r"><b>BR-310</b> says every fee change must reach the legacy
+        engine. It keeps its own copy of the rate.</div>
+    </div>
+  </div>
+
+  <div class="proof">
+    <span><b>22</b> real executions, not a reading of the diff</span>
+    <span>Strands Agents SDK on <b>Amazon Bedrock</b></span>
+    <span>about <b>$0.58</b> a rehearsal</span>
   </div>
 </header>
 
-<div class="preview">
-  <div class="pv-cap">What a rehearsal finds</div>
-  <div class="pv-change">Transaction fee <b>2.5% &rarr; 2%</b>, one line, one file</div>
-  <div class="pv-arrow">&darr;</div>
-  <div class="pv-out">
-    <div class="pv-line ok"><i>&#10003;</i> Payment path changed, exactly as intended</div>
-    <div class="pv-line bad"><i>&#9888;</i> Refund path changed too, and a contract fixes it at 2.5%</div>
-    <div class="pv-line gap"><i>&#9888;</i> Legacy billing never changed, though the same rule governs it</div>
-  </div>
-  <div class="pv-arrow">&darr;</div>
-  <div class="pv-verdict">Two contract violations, in opposite directions.
-    <small>Neither appears in the diff. Neither throws an error.</small></div>
-</div>
+<section class="try">
+  <h2>Try it</h2>
+  <div class="card">
+    <p class="pick">Pick a change. Each one opens a real recorded rehearsal straight
+      away.</p>
+    <div class="presets" id="presets"></div>
 
-<div class="card">
-  <textarea id="change" spellcheck="false"
-    placeholder="Describe a change, e.g. Change the standard transaction fee from 2.5% to 2%"></textarea>
-  <div class="presets" id="presets"></div>
-  <div class="row">
-    <button id="go">Rehearse change</button>
-    <span class="note" id="hint">Takes about two minutes.</span>
-  </div>
+    <div class="own">
+      <label for="change">Or describe your own change, and run it live</label>
+      <textarea id="change" spellcheck="false"
+        placeholder="e.g. Change the standard transaction fee from 2.5% to 2%"></textarea>
+      <div class="row">
+        <button id="go">Run it live</button>
+        <span class="note" id="hint">A live run takes 2 to 5 minutes. The agents run
+          for real on AWS.</span>
+      </div>
+    </div>
 
-  <div class="about">
-    <strong>What is it rehearsing against?</strong>
-    A small payments application called <strong>AcmePay</strong>, included in this
-    project at
-    <a href="https://github.com/bzdmin/replay/tree/main/demo-repo/acmepay" target="_blank"
-       rel="noopener">demo-repo/acmepay</a>.
-    It has a payment service, a refund service, a modern billing service, a
-    legacy billing engine ported from a mainframe, and a
-    <a href="https://github.com/bzdmin/replay/blob/main/demo-repo/acmepay/docs/business-rules.md"
-       target="_blank" rel="noopener">written rulebook</a> of contractual
-    business rules. Replay reads it, runs it, changes it, and runs it again.
-    Browse it before you start and the findings below will mean more.
+    <div class="about">
+      <strong>What is it rehearsing against?</strong>
+      A small payments application called <strong>AcmePay</strong>, included in this
+      project at
+      <a href="https://github.com/bzdmin/replay/tree/main/demo-repo/acmepay" target="_blank"
+         rel="noopener">demo-repo/acmepay</a>.
+      It has a payment service, a refund service, a modern billing service, a
+      legacy billing engine ported from a mainframe, and a
+      <a href="https://github.com/bzdmin/replay/blob/main/demo-repo/acmepay/docs/business-rules.md"
+         target="_blank" rel="noopener">written rulebook</a> of contractual
+      business rules. Replay reads it, runs it, changes it, and runs it again.
+      Browse it before you start and the findings below will mean more.
+    </div>
+    <div id="progress"></div>
+    <div class="err" id="err"></div>
   </div>
-  <div id="progress"></div>
-  <div class="err" id="err"></div>
-</div>
+</section>
 
 <div id="out"></div>
 
@@ -358,17 +381,18 @@ python scripts/rehearse.py \
 
 <script>
 // Replay substitutes values in existing rules; it does not author new
-// features. Presets are chosen to show two different shapes of result:
-// a change that breaks two contracts, and a change that turns out safe
-// but surfaces a subtle arithmetic difference.
-// Each preset has been run and produces a different shape of result:
-//   1. the change leaks into a contract and fails to reach a duplicate
-//   2. the change is safe, but exposes a cent-level arithmetic difference
-//   3. every prediction is correct, and the change is forbidden anyway
+// features. Each preset has been run, and each has a real recorded result that
+// opens instantly. They were chosen to show different shapes of result.
 const PRESETS = [
-  "Change the standard transaction fee from 2.5% to 2%",
-  "Move legacy-enterprise merchants onto the modern billing path",
-  "Change money rounding from ROUND_HALF_UP to ROUND_DOWN",
+  { name: "fee",
+    text: "Change the standard transaction fee from 2.5% to 2%",
+    hint: "Leaks into a contract, and misses a copy of the rate" },
+  { name: "legacy",
+    text: "Move legacy-enterprise merchants onto the modern billing path",
+    hint: "One cent moves on a $99.99 charge, because the two paths round differently" },
+  { name: "rounding",
+    text: "Change money rounding from ROUND_HALF_UP to ROUND_DOWN",
+    hint: "Every prediction holds, and the verifier still blocks it under four contract rules" },
 ];
 
 const $ = id => document.getElementById(id);
@@ -391,12 +415,38 @@ const PILL = {
   "over-propagation":"p-over", "under-propagation":"p-under", "unpredicted":"p-unp"
 };
 
+function setActive(name){
+  document.querySelectorAll(".preset").forEach(b =>
+    b.classList.toggle("on", b.dataset.name === name));
+}
+
 PRESETS.forEach(p => {
   const b = document.createElement("button");
-  b.className = "preset"; b.textContent = p;
-  b.onclick = () => { $("change").value = p; $("change").focus(); };
+  b.className = "preset"; b.dataset.name = p.name;
+  b.innerHTML = esc(p.text) + (p.hint ? `<small>${esc(p.hint)}</small>` : "");
+  b.onclick = () => openRecorded(p, true);
   $("presets").appendChild(b);
 });
+
+async function openRecorded(p, scroll){
+  if ($("go").disabled) return;          // a live run is in progress
+  setActive(p.name);
+  // Each preset gets its own link, e.g. /#rounding, so a result can be shared.
+  if (scroll) history.replaceState(null, "", "#" + p.name);
+  $("change").value = p.text;
+  $("err").textContent = "";
+  $("progress").style.display = "none";
+  try{
+    const res = await fetch("/api/recorded/" + p.name);
+    if (!res.ok) throw new Error("not recorded");
+    render(await res.json(), true);
+    if (scroll) $("out").scrollIntoView({behavior: "smooth", block: "start"});
+  }catch(e){
+    $("out").innerHTML = "";
+    $("err").textContent = "There is no recorded run for this change yet. " +
+      "Press Run it live to rehearse it now.";
+  }
+}
 
 // A fixed, numbered list so the machinery is visible without anyone needing to
 // know what an agent is. Steps tick over as the stream reports them.
@@ -450,22 +500,24 @@ function finishSteps(){
 function render(r, recorded){
   const v = r.verification || {};
   const risk = (v.overall_risk || "low").toLowerCase();
-  let h = "";
-
-  if (recorded){
-    h += `<p class="ctx">Showing a previously recorded rehearsal of
-      <em>${esc(r.request)}</em> - a real run, with real executions.
-      Describe your own change above to run a live one.</p>`;
-  }
-
   const st = r.stats || {};
   const surp = r.surprises || [];
+  const divs = r.divergences || [];
+  let h = "";
+
+  h += recorded
+    ? `<p class="ctx"><span class="tagr">Recorded run</span>A real rehearsal of
+        <em>${esc(r.request)}</em>, with real executions. Press Run it live to
+        rehearse it yourself.</p>`
+    : `<p class="ctx"><span class="tagr">Live run</span>Your rehearsal of
+        <em>${esc(r.request)}</em>, just now.</p>`;
 
   // The hero shows real numbers, not a description of the machinery.
   // A couple of changes that went as intended first, so the ones that did not
   // have something to land against. All problems, and nothing else, reads flat.
-  const intended = r.divergences.filter(d => !d.surprising && d.verdict !== "unchanged");
-  const rows = intended.slice(0, 2).concat(surp.slice(0, 4));
+  const intended = divs.filter(d => !d.surprising && d.verdict !== "unchanged");
+  let rows = intended.slice(0, 2).concat(surp.slice(0, 4));
+  if (!rows.length) rows = divs.slice(0, 4);
 
   h += `<div class="hero">
     <div class="chg">Proposed change: <b>${esc(r.request)}</b></div>
@@ -475,7 +527,7 @@ function render(r, recorded){
   for (const d of rows){
     const cls = d.outcome === "over-propagation" ? "bad"
               : d.outcome === "under-propagation" ? "gap" : "";
-    const flag = d.surprising ? (cls === "gap" ? "&#9888;" : "&#9888;") : "&#10003;";
+    const flag = d.surprising ? "&#9888;" : "&#10003;";
     const fc = cls === "bad" ? "var(--red)" : cls === "gap" ? "var(--amber)" : "var(--green)";
     h += `<div class="lbl">${esc(shorten(d.name))}</div>
           <div class="v b">${esc(d.before)}</div>
@@ -484,13 +536,23 @@ function render(r, recorded){
   }
   h += `</div>`;
 
+  const runs = `<small>${esc(st.executions)} real executions across two isolated copies of the codebase.</small>`;
+  // Say only what this run found. A run with just one kind of failure must not
+  // claim the other.
+  const over = surp.some(s => s.outcome === "over-propagation");
+  const under = surp.some(s => s.outcome === "under-propagation");
   if (surp.length){
-    h += `<div class="verdictline bad">Behaviour changed where it should not have,
-      and stayed the same where it should have moved.
-      <small>${st.executions} real executions across two isolated copies of the codebase.</small></div>`;
+    const said = over && under
+      ? "Behaviour changed where it should not have, and stayed the same where it should have moved."
+      : over ? "Behaviour changed where it should not have."
+      : under ? "Behaviour stayed the same where it should have moved."
+      : "Behaviour did not match what the rules predicted.";
+    h += `<div class="verdictline bad">${said}${runs}</div>`;
+  } else if (risk === "high" || risk === "medium"){
+    h += `<div class="verdictline warn">Every prediction held. The verifier still
+      says do not ship it as it stands.${runs}</div>`;
   } else {
-    h += `<div class="verdictline ok">Every observation behaved as predicted.
-      <small>${st.executions} real executions across two isolated copies of the codebase.</small></div>`;
+    h += `<div class="verdictline ok">Every observation behaved as predicted.${runs}</div>`;
   }
   h += `</div>`;
 
@@ -515,14 +577,15 @@ function render(r, recorded){
   }
 
   h += `<h2>What the verifier concluded</h2>
-    <div class="banner risk-${risk}">
-      <span class="lvl">${risk.toUpperCase()}</span>
+    <div class="banner risk-${esc(risk)}">
+      <span class="lvl">${esc(risk.toUpperCase())}</span>
       <p>${esc(v.summary || "No verification available.")}</p>
     </div>`;
 
-  h += `<h2>Behavioural diff</h2><div class="card"><table>
+  h += `<details class="fold"><summary>All ${divs.length} scenarios, before and after
+      <span>behavioural diff</span></summary><div class="inner"><div class="tablewrap"><table>
     <tr><th>Scenario</th><th>Before</th><th>After</th><th>Predicted</th><th>Outcome</th></tr>`;
-  for (const d of r.divergences){
+  for (const d of divs){
     h += `<tr class="${d.surprising ? "surprise" : ""}">
       <td>${esc(d.name)}<br><span style="color:var(--dim);font-family:var(--mono);font-size:12px">${esc(d.call)}</span></td>
       <td class="val">${esc(d.before)}</td>
@@ -531,10 +594,11 @@ function render(r, recorded){
       <td><span class="pill ${PILL[d.outcome] || "p-unp"}">${esc(d.outcome)}</span></td>
     </tr>`;
   }
-  h += `</table></div>`;
+  h += `</table></div></div></details>`;
 
   if (v.challenges && v.challenges.length){
-    h += `<h2>Verifier findings</h2>`;
+    h += `<details class="fold"><summary>The verifier's evidence, line by line
+        <span>${v.challenges.length} findings</span></summary><div class="inner">`;
     for (const c of v.challenges){
       h += `<div class="chal">
         <span class="sev s-${esc(c.severity)}">${esc(c.severity).toUpperCase()}</span>
@@ -544,38 +608,33 @@ function render(r, recorded){
           ? `<div class="ev">${c.evidence.map(e => `<div>${esc(e)}</div>`).join("")}</div>` : ""}
       </div>`;
     }
+    h += `</div></details>`;
   }
 
   const imp = r.impact || {};
-  h += `<details><summary>Technical details</summary>
+  h += `<details class="fold"><summary>Technical details
+      <span>edits and discarded scenarios</span></summary><div class="inner">
     <pre>edits applied
-${(r.applied || []).map(a => `  ${a.path}  (${a.occurrences} occurrence)`).join("\n") || "  none"}
+${(r.applied || []).map(a => `  ${esc(a.path)}  (${esc(a.occurrences)} occurrence)`).join("\n") || "  none"}
 
 suspected duplicates reported but deliberately not edited
-${(imp.suspected_duplicates || []).map(d => `  ${d}`).join("\n") || "  none"}
+${(imp.suspected_duplicates || []).map(d => `  ${esc(d)}`).join("\n") || "  none"}
 ${(r.discarded || []).length ? `
 scenarios discarded as unresolvable
-${r.discarded.map(d => `  ${d.id}: ${d.reason}`).join("\n")}` : ""}</pre></details>`;
+${r.discarded.map(d => `  ${esc(d.id)}: ${esc(d.reason)}`).join("\n")}` : ""}</pre></div></details>`;
 
-  const s = r.stats || {};
-  h += `<div class="stats">${s.executions} real executions across 2 isolated sandboxes ·
-    ${s.scenarios} scenarios · ${s.surprises} prediction failure(s)</div>`;
+  h += `<div class="stats">${esc(st.executions)} real executions across 2 isolated sandboxes ·
+    ${esc(st.scenarios)} scenarios · ${esc(st.surprises)} prediction failure(s)</div>`;
 
   $("out").innerHTML = h;
-}
-
-async function loadFlagship(){
-  try{
-    const res = await fetch("/api/flagship");
-    if (res.ok) render(await res.json(), true);
-  }catch(e){ /* page still works without it */ }
 }
 
 $("go").onclick = () => {
   const change = $("change").value.trim();
   $("err").textContent = "";
-  if (!change){ $("err").textContent = "Describe a change first."; return; }
+  if (!change){ $("err").textContent = "Describe a change first, or pick one above."; return; }
 
+  setActive(null);
   $("go").disabled = true;
   $("go").textContent = "Rehearsing…";
   $("out").innerHTML = "";
@@ -584,6 +643,10 @@ $("go").onclick = () => {
   markStep(1, "starting the agents");
 
   const src = new EventSource("/api/rehearse?change=" + encodeURIComponent(change));
+  const done = () => {
+    src.close();
+    $("go").disabled = false; $("go").textContent = "Run it live";
+  };
 
   src.addEventListener("progress", e => {
     const d = JSON.parse(e.data);
@@ -593,22 +656,20 @@ $("go").onclick = () => {
   src.addEventListener("report", e => {
     finishSteps();
     render(JSON.parse(e.data), false);
+    done();
   });
 
   src.addEventListener("error", e => {
     finishSteps();
     if (e.data){ try{ $("err").textContent = JSON.parse(e.data).message; }catch(_){} }
-    src.close();
-    $("go").disabled = false; $("go").textContent = "Rehearse change";
+    done();
   });
 
-  src.onerror = () => {
-    src.close();
-    $("go").disabled = false; $("go").textContent = "Rehearse change";
-  };
+  src.onerror = done;
 };
 
-loadFlagship();
+const linked = PRESETS.find(p => location.hash === "#" + p.name);
+openRecorded(linked || PRESETS[0], Boolean(linked));
 </script>
 </body>
 </html>

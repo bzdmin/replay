@@ -105,6 +105,25 @@ async def flagship() -> JSONResponse:
     return JSONResponse(json.loads(FLAGSHIP.read_text(encoding="utf-8")))
 
 
+# One real recorded run per preset, so clicking a preset shows its result at
+# once instead of after a two minute wait. A fixed allowlist, never a path built
+# from the request.
+RECORDED = {
+    "fee": ROOT / "data" / "flagship.json",
+    "legacy": ROOT / "data" / "legacy.json",
+    "rounding": ROOT / "data" / "rounding.json",
+}
+
+
+@app.get("/api/recorded/{name}")
+async def recorded(name: str) -> JSONResponse:
+    """A previously recorded rehearsal for one of the presets."""
+    path = RECORDED.get(name)
+    if path is None or not path.exists():
+        return JSONResponse({"error": "no recorded run available"}, status_code=404)
+    return JSONResponse(json.loads(path.read_text(encoding="utf-8")))
+
+
 @app.get("/healthz")
 async def healthz() -> dict[str, str]:
     return {"status": "ok"}

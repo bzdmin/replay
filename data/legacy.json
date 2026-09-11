@@ -1,0 +1,308 @@
+{
+  "request": "Move legacy-enterprise merchants onto the modern billing path",
+  "impact": {
+    "edits": [
+      {
+        "path": "core/config.py",
+        "find": "LEGACY_PLANS = frozenset({\"legacy-2019\", \"legacy-enterprise\"})",
+        "replace": "LEGACY_PLANS = frozenset({\"legacy-2019\"})",
+        "rationale": "Remove \"legacy-enterprise\" from the set of plans routed to the legacy billing engine, so that merchants on that plan fall through to the modern billing path in services/billing_service.py."
+      }
+    ],
+    "affected_components": [
+      "core/config.py",
+      "services/billing_service.py"
+    ],
+    "suspected_duplicates": [
+      "docs/business-rules.md lines 26-27 - BR-310 still explicitly names `legacy-enterprise` as a plan billed through the legacy engine. After this edit, the code contradicts the documented contractual rule. The document header (line 3) states these rules are contractual and require finance and legal sign-off to change.",
+      "services/legacy_billing.py line 12 - `_FEE_BASIS_POINTS = 250` is an independent copy of the 2.5% fee rate (expressed as 250 basis points). The modern path uses `STANDARD_FEE_RATE = Decimal(\"0.025\")` from core/config.py. Today they are numerically equivalent, but they are maintained separately. If either is changed independently in the future, legacy-enterprise merchants will silently get the modern rate instead of the legacy one.",
+      "services/legacy_billing.py line 19 - `compute_fee_minor` uses integer floor-division (`// _BASIS_POINT_DIVISOR`) producing truncated results, whereas the modern path in services/billing_service.py line 19 uses `to_money()` which calls `Decimal.quantize(CENTS, rounding=ROUND_HALF_UP)` via core/money.py. For the same transaction amount, the two paths can yield different fee amounts. Moving legacy-enterprise merchants to the modern path changes which rounding rule applies, breaking reconciliation against their historical statements - the exact scenario BR-310 was written to prevent.",
+      "services/billing_service.py lines 22-25 - `statement_rate()` also branches on `LEGACY_PLANS`. After this edit it will stop calling `legacy_billing.describe_rate()` for legacy-enterprise merchants and instead format from `STANDARD_FEE_RATE`. The output string is identical today (\"2.50%\") but is derived from a different source value, so any future rate divergence will silently propagate to merchant statements."
+    ],
+    "notes": "The edit is a single-line change to the canonical definition in core/config.py. Both call sites in services/billing_service.py (bill_transaction and statement_rate) read LEGACY_PLANS at runtime, so both will change behaviour for legacy-enterprise merchants without any further code changes.\n\nKey risks:\n1. BR-310 is documented as a contractual rule requiring finance and legal sign-off. This edit changes billing behaviour governed by BR-310 without updating the rule documentation.\n2. The legacy engine truncates fees via integer floor-division; the modern path rounds half-up. For certain transaction amounts the billed fee will change, which will break reconciliation against historical statements.\n3. No test coverage was found for LEGACY_PLANS, bill_transaction, statement_rate, or legacy_billing - searches across test files returned no results. There is nothing to catch the behavioural change."
+  },
+  "applied": [
+    {
+      "path": "core/config.py",
+      "occurrences": 1
+    }
+  ],
+  "divergences": [
+    {
+      "id": "legacy_enterprise_bill_rounding_divergence",
+      "name": "bill_transaction for legacy-enterprise at 99.99 - amount where legacy truncation (2.49) and modern ROUND_HALF_UP (2.50) diverge",
+      "call": "services.billing_service.bill_transaction",
+      "kwargs": {
+        "amount": "99.99",
+        "merchant_plan": "legacy-enterprise"
+      },
+      "predicted": "changed",
+      "because": "BR-310 requires legacy-enterprise to be billed through the legacy engine with integer-truncation arithmetic. The proposed change removes legacy-enterprise from LEGACY_PLANS, rerouting it to the modern path which uses ROUND_HALF_UP rounding via core/money.py. At 99.99 the two paths produce different cent values (legacy: 2.49, modern: 2.50).",
+      "before": "2.49",
+      "after": "2.50",
+      "verdict": "changed",
+      "outcome": "confirmed effect",
+      "surprising": false,
+      "duration_ms": 163
+    },
+    {
+      "id": "legacy_enterprise_statement_rate",
+      "name": "statement_rate for legacy-enterprise - currently derived from legacy_billing.describe_rate(), should switch to formatting STANDARD_FEE_RATE",
+      "call": "services.billing_service.statement_rate",
+      "kwargs": {
+        "merchant_plan": "legacy-enterprise"
+      },
+      "predicted": "changed",
+      "because": "BR-310 governs which engine produces the statement rate for legacy-enterprise merchants. The change reroutes this from legacy_billing.describe_rate() (which reads _FEE_BASIS_POINTS) to the modern path (which formats STANDARD_FEE_RATE). Both happen to produce '2.50%' today, but BR-310 says the derivation source must be the legacy engine; violating that routing is exactly what the change does.",
+      "before": "2.50%",
+      "after": "2.50%",
+      "verdict": "unchanged",
+      "outcome": "under-propagation",
+      "surprising": true,
+      "duration_ms": 114
+    },
+    {
+      "id": "legacy_2019_bill_unchanged",
+      "name": "bill_transaction for legacy-2019 at 99.99 - this plan is NOT being moved off the legacy path",
+      "call": "services.billing_service.bill_transaction",
+      "kwargs": {
+        "amount": "99.99",
+        "merchant_plan": "legacy-2019"
+      },
+      "predicted": "unchanged",
+      "because": "BR-310 (docs/business-rules.md lines 26-27) still explicitly names legacy-2019 as a plan billed through the legacy engine. The proposed change targets only legacy-enterprise. If this observation moves, the change leaked to a plan it must not affect.",
+      "before": "2.49",
+      "after": "2.49",
+      "verdict": "unchanged",
+      "outcome": "contained",
+      "surprising": false,
+      "duration_ms": 115
+    },
+    {
+      "id": "legacy_2019_statement_rate_unchanged",
+      "name": "statement_rate for legacy-2019 - must remain routed through the legacy engine",
+      "call": "services.billing_service.statement_rate",
+      "kwargs": {
+        "merchant_plan": "legacy-2019"
+      },
+      "predicted": "unchanged",
+      "because": "BR-310 still governs legacy-2019 billing. Only legacy-enterprise is being moved. If this moves, the change over-reached.",
+      "before": "2.50%",
+      "after": "2.50%",
+      "verdict": "unchanged",
+      "outcome": "contained",
+      "surprising": false,
+      "duration_ms": 112
+    },
+    {
+      "id": "standard_plan_bill_unchanged",
+      "name": "bill_transaction for a standard merchant at 99.99 - already on the modern path, governed by BR-101",
+      "call": "services.billing_service.bill_transaction",
+      "kwargs": {
+        "amount": "99.99",
+        "merchant_plan": "standard"
+      },
+      "predicted": "unchanged",
+      "because": "Standard merchants are governed by BR-101 via the modern billing path. The proposed change only modifies BR-310 routing for legacy-enterprise. If this moves, the change corrupted the modern path itself.",
+      "before": "2.50",
+      "after": "2.50",
+      "verdict": "unchanged",
+      "outcome": "contained",
+      "surprising": false,
+      "duration_ms": 114
+    },
+    {
+      "id": "legacy_engine_compute_fee_unchanged",
+      "name": "Direct call to legacy_billing.compute_fee_minor(9999) - the engine's own arithmetic must not be touched",
+      "call": "services.legacy_billing.compute_fee_minor",
+      "kwargs": {
+        "amount_minor": 9999
+      },
+      "predicted": "unchanged",
+      "because": "BR-310 still requires the legacy engine for legacy-2019. The change is a routing change in billing_service.py and core/config.py; it must not modify the legacy engine's own integer-truncation arithmetic.",
+      "before": "249",
+      "after": "249",
+      "verdict": "unchanged",
+      "outcome": "contained",
+      "surprising": false,
+      "duration_ms": 103
+    },
+    {
+      "id": "legacy_engine_describe_rate_unchanged",
+      "name": "Direct call to legacy_billing.describe_rate() - the legacy engine's rate description must not change",
+      "call": "services.legacy_billing.describe_rate",
+      "kwargs": {},
+      "predicted": "unchanged",
+      "because": "The legacy engine is not being modified; only the routing in billing_service is. BR-310 still requires this function for legacy-2019 statements.",
+      "before": "2.50%",
+      "after": "2.50%",
+      "verdict": "unchanged",
+      "outcome": "contained",
+      "surprising": false,
+      "duration_ms": 108
+    },
+    {
+      "id": "payment_service_fee_unchanged",
+      "name": "payment_service.calculate_fee(99.99) - governed by BR-101, not BR-310",
+      "call": "services.payment_service.calculate_fee",
+      "kwargs": {
+        "amount": "99.99",
+        "currency": "NGN"
+      },
+      "predicted": "unchanged",
+      "because": "BR-101 governs the standard payment fee independently. The change only affects BR-310 routing for legacy-enterprise merchants. payment_service reads STANDARD_FEE_RATE from core/config.py; if the engineer accidentally modifies that constant, this will catch it.",
+      "before": "2.50",
+      "after": "2.50",
+      "verdict": "unchanged",
+      "outcome": "contained",
+      "surprising": false,
+      "duration_ms": 128
+    },
+    {
+      "id": "refund_fee_unchanged",
+      "name": "refund_service.calculate_refund_fee(99.99) - governed by BR-207, contractually independent",
+      "call": "services.refund_service.calculate_refund_fee",
+      "kwargs": {
+        "amount": "99.99",
+        "currency": "NGN"
+      },
+      "predicted": "unchanged",
+      "because": "BR-207 (docs/business-rules.md lines 15-19) explicitly states the refund fee is fixed by the merchant master agreement and does not follow changes to BR-101. It is also not governed by BR-310. Amending BR-207 requires renegotiating the merchant contract.",
+      "before": "2.50",
+      "after": "2.50",
+      "verdict": "unchanged",
+      "outcome": "contained",
+      "surprising": false,
+      "duration_ms": 120
+    }
+  ],
+  "surprises": [
+    {
+      "id": "legacy_enterprise_statement_rate",
+      "name": "statement_rate for legacy-enterprise - currently derived from legacy_billing.describe_rate(), should switch to formatting STANDARD_FEE_RATE",
+      "call": "services.billing_service.statement_rate",
+      "kwargs": {
+        "merchant_plan": "legacy-enterprise"
+      },
+      "predicted": "changed",
+      "because": "BR-310 governs which engine produces the statement rate for legacy-enterprise merchants. The change reroutes this from legacy_billing.describe_rate() (which reads _FEE_BASIS_POINTS) to the modern path (which formats STANDARD_FEE_RATE). Both happen to produce '2.50%' today, but BR-310 says the derivation source must be the legacy engine; violating that routing is exactly what the change does.",
+      "before": "2.50%",
+      "after": "2.50%",
+      "verdict": "unchanged",
+      "outcome": "under-propagation",
+      "surprising": true,
+      "duration_ms": 114
+    }
+  ],
+  "discarded": [],
+  "verification": {
+    "overall_risk": "high",
+    "summary": "The edit removes \"legacy-enterprise\" from LEGACY_PLANS in core/config.py:11, rerouting those merchants from the legacy billing engine to the modern path. This directly violates BR-310 (docs/business-rules.md:26-27), which is marked as contractual (docs/business-rules.md:3). The observed fee change from 2.49 to 2.50 on a $99.99 transaction proves the two paths produce materially different results due to incompatible rounding, breaking the reconciliation guarantee BR-310 was written to protect. The unchanged statement_rate output is a coincidence that masks a real derivation-source switch, creating latent risk of future silent rate divergence.",
+    "challenges": [
+      {
+        "scenario_id": "legacy_enterprise_bill_rounding_divergence",
+        "severity": "critical",
+        "claim": "The fee for legacy-enterprise merchants changed from 2.49 to 2.50 on a $99.99 transaction. This is a one-cent difference caused by switching from the legacy engine's integer floor-division (services/legacy_billing.py:19: `(9999 * 250) // 10000 = 249` minor units \u2192 2.49) to the modern path's ROUND_HALF_UP (core/money.py:14: Decimal('99.99') * 0.025 = 2.49975 \u2192 quantize \u2192 2.50). BR-310 (docs/business-rules.md:26-27) explicitly requires legacy-enterprise merchants to be billed through the legacy engine. Lines 30-32 explain the legacy engine exists specifically 'so that reconciliation against historical statements still balances'. This change breaks that reconciliation guarantee. The document header (docs/business-rules.md:3) states 'These rules are contractual. Changes require finance and legal sign-off.' No such sign-off or documentation update accompanies this change.",
+        "rule_violated": "BR-310",
+        "evidence": [
+          "docs/business-rules.md:3 - 'These rules are contractual. Changes require finance and legal sign-off.'",
+          "docs/business-rules.md:26-27 - 'Merchants on the legacy-2019 and legacy-enterprise plans are billed through the legacy billing engine'",
+          "docs/business-rules.md:30-32 - 'reconciliation against historical statements still balances'",
+          "core/config.py:11 - LEGACY_PLANS = frozenset({'legacy-2019', 'legacy-enterprise'}) (pre-edit; edit removes legacy-enterprise)",
+          "services/billing_service.py:16-19 - branch routes legacy plans to legacy_billing.compute_fee_minor, others to to_money(amount * STANDARD_FEE_RATE)",
+          "services/legacy_billing.py:19 - floor-division: (amount_minor * 250) // 10000",
+          "core/money.py:14 - quantize(CENTS, rounding=ROUND_HALF_UP)"
+        ]
+      },
+      {
+        "scenario_id": "legacy_enterprise_statement_rate",
+        "severity": "high",
+        "claim": "The prediction that statement_rate would change was wrong about the OUTPUT value (both paths produce '2.50%'), but the DERIVATION SOURCE did change. Before: billing_service.py:24-25 routes legacy-enterprise to legacy_billing.describe_rate(), which reads _FEE_BASIS_POINTS (services/legacy_billing.py:12, value 250). After: the branch is skipped and billing_service.py:26 formats from STANDARD_FEE_RATE (core/config.py:7, Decimal('0.025')). These are independently maintained values per BR-310 lines 30-32: 'Any change to BR-101 must be applied to the legacy engine separately.' After this edit, if STANDARD_FEE_RATE is updated (e.g., to 3%), legacy-enterprise statements will silently reflect the new rate instead of the legacy rate. The identical output today is coincidental, not evidence of safety.",
+        "rule_violated": "BR-310",
+        "evidence": [
+          "services/billing_service.py:22-26 - statement_rate branches on LEGACY_PLANS",
+          "services/legacy_billing.py:12 - _FEE_BASIS_POINTS = 250 (independent copy)",
+          "core/config.py:7 - STANDARD_FEE_RATE = Decimal('0.025') (modern copy)",
+          "docs/business-rules.md:30-32 - 'The legacy engine holds its own copy of the fee rate... Any change to BR-101 must be applied to the legacy engine separately.'"
+        ]
+      },
+      {
+        "scenario_id": null,
+        "severity": "high",
+        "claim": "docs/business-rules.md was not updated. Line 26-27 still explicitly names 'legacy-enterprise' as a plan billed through the legacy engine. The code now contradicts the documented contractual rule. Per line 3, these rules are contractual and changes require finance and legal sign-off. The system is left in an inconsistent state where code behavior contradicts the governing contract.",
+        "rule_violated": "BR-310",
+        "evidence": [
+          "docs/business-rules.md:3 - 'These rules are contractual. Changes require finance and legal sign-off.'",
+          "docs/business-rules.md:26-27 - still names legacy-enterprise as a legacy-engine plan",
+          "core/config.py:11 - edit removed legacy-enterprise from LEGACY_PLANS, contradicting the document"
+        ]
+      },
+      {
+        "scenario_id": null,
+        "severity": "medium",
+        "claim": "BR-415 (docs/business-rules.md:38-40) states 'All monetary arithmetic rounds half-up to two decimal places via core/money.py. No service may implement its own rounding.' The legacy engine at services/legacy_billing.py:19 uses integer floor-division (truncation), which is its own rounding method. This pre-existing tension between BR-415 and BR-310 was tolerable while BR-310 quarantined legacy merchants on the legacy path. The edit does not resolve this tension-it simply moves legacy-enterprise merchants onto the BR-415-compliant path without addressing the underlying rule conflict. If this is meant as a compliance fix for BR-415, it needs to be framed that way with finance sign-off, not silently applied through a config edit.",
+        "rule_violated": "BR-415",
+        "evidence": [
+          "docs/business-rules.md:38-40 - 'All monetary arithmetic rounds half-up to two decimal places via core/money.py. No service may implement its own rounding.'",
+          "services/legacy_billing.py:19 - floor-division truncation, not ROUND_HALF_UP",
+          "core/money.py:14 - ROUND_HALF_UP is the approved rounding"
+        ]
+      },
+      {
+        "scenario_id": "legacy_2019_bill_unchanged",
+        "severity": "expected",
+        "claim": "legacy-2019 remains in LEGACY_PLANS at core/config.py:11 and continues to be routed through the legacy engine at billing_service.py:16-18. Output 2.49 is correct and unchanged, consistent with BR-310.",
+        "rule_violated": null,
+        "evidence": [
+          "core/config.py:11 - LEGACY_PLANS still contains 'legacy-2019'",
+          "services/billing_service.py:16-18 - legacy branch still taken for legacy-2019"
+        ]
+      },
+      {
+        "scenario_id": "standard_plan_bill_unchanged",
+        "severity": "expected",
+        "claim": "Standard plan merchants were already on the modern path. Output 2.50 is unchanged, consistent with BR-101.",
+        "rule_violated": null,
+        "evidence": [
+          "services/billing_service.py:19 - modern path for non-legacy plans",
+          "core/config.py:7 - STANDARD_FEE_RATE = Decimal('0.025')"
+        ]
+      },
+      {
+        "scenario_id": "legacy_engine_compute_fee_unchanged",
+        "severity": "expected",
+        "claim": "Direct call to legacy_billing.compute_fee_minor bypasses routing. The function itself was not edited. Output 249 is correct.",
+        "rule_violated": null,
+        "evidence": [
+          "services/legacy_billing.py:17-19 - function untouched by the edit"
+        ]
+      },
+      {
+        "scenario_id": "payment_service_fee_unchanged",
+        "severity": "expected",
+        "claim": "payment_service.py does not reference LEGACY_PLANS and is governed by BR-101, not BR-310. Unaffected by this change.",
+        "rule_violated": null,
+        "evidence": [
+          "services/payment_service.py:12-14 - no reference to LEGACY_PLANS",
+          "docs/business-rules.md:5-11 - BR-101 governs payment_service"
+        ]
+      },
+      {
+        "scenario_id": "refund_fee_unchanged",
+        "severity": "expected",
+        "claim": "refund_service.py is governed by BR-207, which is contractually independent from BR-101 and BR-310. Unaffected by this change.",
+        "rule_violated": null,
+        "evidence": [
+          "docs/business-rules.md:13-19 - BR-207 is independent, tied to merchant master agreement",
+          "services/refund_service.py:9 - reads STANDARD_FEE_RATE but is not affected by LEGACY_PLANS routing"
+        ]
+      }
+    ]
+  },
+  "stats": {
+    "scenarios": 9,
+    "executions": 18,
+    "changed": 1,
+    "surprises": 1
+  }
+}
