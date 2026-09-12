@@ -13,7 +13,7 @@ Built with the [Strands Agents SDK](https://strandsagents.com) on AWS.
 | | |
 |---|---|
 | **Live** | <https://replay-aj3d.onrender.com> (no login; three real recorded rehearsals open instantly) |
-| **Proof without a model** | `/api/proof` recomputes **12 real executions** of the demo scenarios on request, in about 1.5 seconds, with no agents and no spend. The numbers on the page were produced while you were reading it. |
+| **Proof without a model** | `/api/proof` recomputes **12 real executions** of the demo scenarios on request, in about 1 second on a laptop and about 3 on the free hosting tier, with no agents and no spend. The numbers on the page were produced while you were reading it. |
 | **Track** | AWS Agents for Humans Hackathon, Professional Agents |
 | **Measured** | The recorded fee rehearsal: **11 scenarios, 22 real executions, 6 predictions contradicted**. The legacy rehearsal: 9 scenarios, 18 executions, 1 contradicted. The rounding rehearsal: 11 scenarios, 22 executions, **0 contradicted, and the verifier still refused to pass it**. A rehearsal costs about **$0.58** in Bedrock tokens (79,103 in, 7,297 out). |
 | **Honest limit** | Pointed at its own source, Replay discarded **6 of the 9** scenarios it generated because it could not execute them, and said so instead of inventing findings. |
