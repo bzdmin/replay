@@ -18,68 +18,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from replay.differ import Verdict, diff  # noqa: E402
+from replay.proof import CHANGE, REPO, SCENARIOS  # noqa: E402
 from replay.sandbox import rehearse  # noqa: E402
-from replay.scenarios import Change, Edit, Scenario  # noqa: E402
 
-REPO = Path(__file__).resolve().parents[1] / "demo-repo" / "acmepay"
-
-AMOUNT = 100_000
-
-SCENARIOS = [
-    Scenario(
-        id="standard_payment_fee",
-        name="Fee on a standard card payment",
-        module="services.payment_service",
-        function="calculate_fee",
-        kwargs={"amount": AMOUNT},
-    ),
-    Scenario(
-        id="net_settlement",
-        name="Net amount settled to the merchant",
-        module="services.payment_service",
-        function="net_settlement",
-        kwargs={"amount": AMOUNT},
-    ),
-    Scenario(
-        id="refund_fee",
-        name="Fee retained when a payment is refunded",
-        module="services.refund_service",
-        function="calculate_refund_fee",
-        kwargs={"amount": AMOUNT},
-    ),
-    Scenario(
-        id="standard_merchant_billing",
-        name="Transaction billed to a standard-plan merchant",
-        module="services.billing_service",
-        function="bill_transaction",
-        kwargs={"amount": AMOUNT, "merchant_plan": "standard"},
-    ),
-    Scenario(
-        id="legacy_merchant_billing",
-        name="Transaction billed to a legacy-plan merchant",
-        module="services.billing_service",
-        function="bill_transaction",
-        kwargs={"amount": AMOUNT, "merchant_plan": "legacy-2019"},
-    ),
-    Scenario(
-        id="legacy_statement_rate",
-        name="Rate printed on a legacy merchant statement",
-        module="services.billing_service",
-        function="statement_rate",
-        kwargs={"merchant_plan": "legacy-2019"},
-    ),
-]
-
-CHANGE = Change(
-    description="Change the standard transaction fee from 2.5% to 2%",
-    edits=[
-        Edit(
-            path="core/config.py",
-            find='STANDARD_FEE_RATE = Decimal("0.025")',
-            replace='STANDARD_FEE_RATE = Decimal("0.02")',
-        )
-    ],
-)
+# The scenarios and the change live in replay/proof.py, because the web page
+# recomputes this same proof on request. One copy, so the two can never drift.
 
 MARK = {
     Verdict.UNCHANGED: "  ",

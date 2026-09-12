@@ -129,6 +129,38 @@ async def healthz() -> dict[str, str]:
     return {"status": "ok"}
 
 
+# The deterministic proof, recomputed while the visitor is reading. It runs the
+# sandbox and the differ with no agents and no model calls, so it costs nothing
+# but CPU. The floor below stops a crawler spinning it without turning the
+# result into a cache: a visitor pressing the button gets a fresh run.
+PROOF_MIN_INTERVAL_S = 3
+_proof_lock = asyncio.Lock()
+_proof_cache: dict[str, object] = {"at": 0.0, "data": None}
+
+
+@app.get("/api/proof")
+async def proof() -> JSONResponse:
+    """Execute the demo scenarios twice, now, and return what actually happened."""
+    async with _proof_lock:
+        now = time.time()
+        cached = _proof_cache["data"]
+        if cached is not None and now - float(_proof_cache["at"]) < PROOF_MIN_INTERVAL_S:
+            return JSONResponse(cached)
+
+        from .proof import run as run_proof
+
+        try:
+            data = await asyncio.to_thread(run_proof)
+        except Exception as exc:  # noqa: BLE001 - surfaced to the browser
+            return JSONResponse(
+                {"error": f"{type(exc).__name__}: {exc}"}, status_code=500
+            )
+
+        _proof_cache["at"] = time.time()
+        _proof_cache["data"] = data
+        return JSONResponse(data)
+
+
 def _sse(event: str, data: dict) -> str:
     return f"event: {event}\ndata: {json.dumps(data)}\n\n"
 

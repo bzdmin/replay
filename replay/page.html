@@ -51,6 +51,26 @@
          display:flex;gap:8px 22px;flex-wrap:wrap}
   .proof b{color:var(--muted);font-weight:600}
 
+  /* The deterministic proof, and the refusals. Both are evidence rather than
+     description, so they get the same weight as a result. */
+  .evid{margin-top:38px}
+  .pbody{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;
+         gap:0 14px;align-items:center;font-size:14px;margin-bottom:16px}
+  .prow{display:contents}
+  .pbody .pn{color:var(--muted);padding:7px 0}
+  .pbody .pv{font-family:var(--mono);text-align:right;color:var(--dim);padding:7px 0}
+  .pbody .pv.chg{color:var(--text);font-weight:600}
+  .pbody .pa{color:var(--border)}
+  button.ghost{background:transparent;color:var(--indigo);border:1px solid var(--border);
+    border-radius:8px;padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer;
+    font-family:inherit}
+  button.ghost:hover:not(:disabled){border-color:var(--indigo)}
+  button.ghost:disabled{opacity:.5;cursor:not-allowed}
+  .judge{margin-top:12px;font-size:13px;color:var(--dim)}
+  .judge a{color:var(--muted);font-family:var(--mono);text-decoration:none;
+           border-bottom:1px solid var(--border)}
+  .judge a:hover{color:var(--indigo);border-bottom-color:var(--indigo)}
+
   h2{font-size:13px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);
      font-weight:700;margin:40px 0 14px}
   .try h2{margin-top:0}
@@ -279,6 +299,9 @@
     <p class="pick">Pick a change. Each one opens a real recorded rehearsal straight
       away.</p>
     <div class="presets" id="presets"></div>
+    <div class="judge">Each one has its own link, nothing to wait for:
+      <a href="#fee">/#fee</a> <a href="#legacy">/#legacy</a>
+      <a href="#rounding">/#rounding</a></div>
 
     <div class="own">
       <label for="change">Or describe your own change, and run it live</label>
@@ -310,6 +333,44 @@
 </section>
 
 <div id="out"></div>
+
+<section class="evid">
+  <h2>Proof it executes, computed while you read this</h2>
+  <div class="card">
+    <p class="pick">No agents, no model calls, nothing spent. This page copies the
+      demo application twice, applies one change to the copy, and runs six
+      scenarios in each. The numbers below were produced by executions that
+      finished a moment ago, and pressing the button replaces them with a run
+      that happens now.</p>
+    <div id="proofbody" class="pbody"></div>
+    <div class="row">
+      <button id="reproof" class="ghost">Run it again now</button>
+      <span class="note" id="proofstat"></span>
+    </div>
+  </div>
+</section>
+
+<section class="evid">
+  <h2>What Replay refuses to do</h2>
+  <div class="card">
+    <p class="pick">Replay applies a change by finding literal text. If that text
+      is missing, or if it matches more than one place, the run stops. It does
+      not guess which one you meant, and it never reports a clean result from a
+      change that was never applied. That check is code that runs before the
+      edit, not an instruction asking a model to be careful.</p>
+    <pre class="cmd">services/refund_service.py: 'STANDARD_FEE_RATE' appears 3 times (lines [9, 17, 19]).
+Widen the find text so it matches exactly one location, or set allow_multiple if
+every occurrence really should change.
+
+core/config.py: no occurrence of 'STANDARD_FEE_RATE = Decimal("0.999")' to replace</pre>
+    <p class="judge" style="margin-top:14px">Both are real output from
+      <a href="https://github.com/bzdmin/replay/blob/main/replay/sandbox.py"
+         target="_blank" rel="noopener">replay/sandbox.py</a>. The first one is
+      the interesting one: the refund service reads the standard fee rate in
+      three separate places, and that duplication is exactly what breaks the
+      refund contract above.</p>
+  </div>
+</section>
 
 <section class="more">
   <div class="cols">
@@ -667,6 +728,34 @@ $("go").onclick = () => {
 
   src.onerror = done;
 };
+
+// The deterministic proof. It costs nothing to run, so the page runs it rather
+// than describing it.
+async function loadProof(){
+  const box = $("proofbody"), st = $("proofstat"), btn = $("reproof");
+  btn.disabled = true;
+  st.textContent = "executing the scenarios...";
+  try{
+    const res = await fetch("/api/proof", {cache: "no-store"});
+    const d = await res.json();
+    if (d.error) throw new Error(d.error);
+    box.innerHTML = d.rows.map(r => `<div class="prow">
+        <span class="pn">${esc(r.name)}</span>
+        <span class="pv">${esc(r.before)}</span>
+        <span class="pa">&rarr;</span>
+        <span class="pv ${r.changed ? "chg" : ""}">${esc(r.after)}</span>
+      </div>`).join("");
+    st.innerHTML = `${esc(d.executions)} real executions in
+      <b style="color:var(--muted)">${esc(d.execution_ms)} ms</b>,
+      ${esc(d.changed)} of ${esc(d.scenarios)} scenarios changed, computed
+      ${esc(d.computed_at)}`;
+  }catch(e){
+    st.textContent = "The proof could not run just now. The recorded results above are unaffected.";
+  }
+  btn.disabled = false;
+}
+$("reproof").onclick = loadProof;
+loadProof();
 
 const linked = PRESETS.find(p => location.hash === "#" + p.name);
 openRecorded(linked || PRESETS[0], Boolean(linked));
