@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="docs/logo.png" width="320" alt="Replay">
-</p>
+<img src="docs/logo.png" width="260" alt="Replay">
 
 # Replay
 
