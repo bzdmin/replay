@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/logo.png" width="320" alt="Replay">
+</p>
+
 # Replay
 
 **Rehearse a change before you ship it.**
