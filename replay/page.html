@@ -49,17 +49,6 @@
   .navlinks{display:flex;align-items:center;gap:22px;font-size:13.5px;color:var(--muted)}
   .navlinks a{color:var(--muted);text-decoration:none}
   .navlinks a:hover{color:var(--text)}
-  .pulse-pill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border2);
-              border-radius:999px;padding:5px 12px 5px 10px;font-family:var(--mono);
-              font-size:11px;letter-spacing:1px;color:var(--muted);text-decoration:none}
-  .pulse-pill:hover{border-color:var(--accent);color:var(--text)}
-  .pulse{width:7px;height:7px;border-radius:50%;background:var(--green);flex:none;
-         box-shadow:0 0 0 0 rgba(74,222,128,.6);animation:pulse 2s infinite}
-  @keyframes pulse{
-    0%{box-shadow:0 0 0 0 rgba(74,222,128,.55)}
-    70%{box-shadow:0 0 0 7px rgba(74,222,128,0)}
-    100%{box-shadow:0 0 0 0 rgba(74,222,128,0)}
-  }
 
   /* Hero ----------------------------------------------------------------*/
   header.hero{padding:56px 0 0;text-align:center}
@@ -354,8 +343,8 @@
   <div class="navlinks">
     <a href="#console">How it works</a>
     <a href="#acmepay">AcmePay</a>
+    <a href="#proof">Proof</a>
     <a href="https://github.com/bzdmin/replay" target="_blank" rel="noopener">GitHub</a>
-    <a class="pulse-pill" href="#proof"><span class="pulse"></span>PROOF LIVE</a>
   </div>
 </nav>
 
@@ -376,7 +365,7 @@
       </div>
       <div class="ccrow">
         <button id="go">Rehearse change</button>
-        <span class="note" id="hint">Recorded results open instantly. Your own text runs live, 2 to 5 minutes.</span>
+        <span class="note" id="hint">Recorded results open instantly. Run your own rehearsal live.</span>
       </div>
       <div class="err" id="err"></div>
     </div>
@@ -644,7 +633,7 @@ function selectTab(name, scroll){
     $("ccPath").textContent = "your repository";
     $("ccCustom").style.display = "block";
     $("go").textContent = "Run it live";
-    $("hint").textContent = "A live run takes 2 to 5 minutes. The agents run for real on AWS.";
+    $("hint").textContent = "Run your own rehearsal live. Real agents on AWS, usually 2 to 5 minutes.";
     renderConsoleIdle(); renderResultIdle(); renderVerifierIdle(); renderAcmeIdle();
     return;
   }
