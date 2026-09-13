@@ -177,6 +177,22 @@ Meanwhile `docs/business-rules.md` BR-207 states that the refund fee is
 So a one-line config change produces two failures of opposite kinds: a
 divergence that should not have happened, and a non-divergence that should have.
 
+The repository also ships two more rehearsals, each with its own recorded run
+on the live site at `/#legacy` and `/#rounding`.
+
+**Moving legacy-enterprise merchants onto the modern billing path** looks like
+a safe migration. It moves the fee on a $99.99 charge from 2.49 to 2.50,
+because the legacy engine truncates and the modern path rounds - two
+implementations of the same rule that have never had to agree before. The
+verifier rates it high risk under BR-310, the same rule that keeps those
+merchants on the legacy engine in the first place.
+
+**Changing money rounding from ROUND_HALF_UP to ROUND_DOWN** is the opposite
+case. All eleven scenarios behave exactly as predicted, and the verifier still
+says do not ship it, because four separate contractual rules - BR-101, BR-207,
+BR-310 and BR-415 - depend on how that rounding behaves. A change can be
+entirely predictable and still be forbidden.
+
 ## Layout
 
 ```

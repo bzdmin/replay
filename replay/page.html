@@ -378,7 +378,10 @@
   <h2 class="big">Investigate. Run. Compare. Verify.</h2>
   <p class="subcopy">Every line below is a real stage of a real rehearsal, not a
     progress bar for effect. Recorded results show what already happened; your
-    own change streams these same six stages as they occur.</p>
+    own change streams these same six stages as they occur. Run current, apply
+    change and run proposed are all carried out by the Replay Runner, deliberately
+    not an agent: comparing two outputs is deterministic work, and a model in
+    that path would only add cost and a failure mode.</p>
   <div class="console" id="consoleBox"></div>
 </section>
 
@@ -409,7 +412,7 @@
     <div class="flowstep">
       <div class="fi">&#9881;</div>
       <div class="ft">Execution</div>
-      <div class="fd">Real subprocesses, two isolated copies</div>
+      <div class="fd">The Replay Runner. Real subprocesses, two isolated copies</div>
     </div>
     <div class="flowarrow">&rarr;</div>
     <div class="flowstep">
@@ -478,8 +481,9 @@ core/config.py: no occurrence of 'STANDARD_FEE_RATE = Decimal("0.999")' to repla
   <div class="kicker">The rehearsal environment</div>
   <h2 class="big">AcmePay is a real, runnable system</h2>
   <p class="subcopy">Not a diagram. A payment service, a refund service, a
-    modern billing service, and a legacy billing engine, all reading from a
-    written rulebook. Replay reads it, runs it, changes it, and runs it again.</p>
+    modern billing service, and a legacy billing engine ported from a mainframe,
+    all reading from a written rulebook. Replay reads it, runs it, changes it,
+    and runs it again.</p>
   <div class="acme">
     <div class="acme-top">
       <div class="at">demo-repo/acmepay</div>
@@ -508,8 +512,9 @@ core/config.py: no occurrence of 'STANDARD_FEE_RATE = Decimal("0.999")' to repla
   <div class="notyet">
     <div class="nk">Not yet</div>
     <div class="nt">Stateful workflows: a login, a cart, a multi-step checkout.
-      Pointed at a codebase it cannot handle, Replay discards the scenarios it
-      could not run and says so, rather than inventing findings.</div>
+      Pointed at its own source code as a test, Replay discarded 6 of the 9
+      scenarios it generated because it could not execute them, and said so
+      rather than inventing findings.</div>
   </div>
 </section>
 
@@ -548,6 +553,7 @@ python scripts/rehearse.py \
 </section>
 
 <div class="foot">
+  <span>AWS Agents for Humans Hackathon, Professional Agents</span>
   <span>Built with the Strands Agents SDK on Amazon Bedrock</span>
   <span><a href="https://github.com/bzdmin/replay">Source on GitHub</a></span>
   <span>Apache-2.0</span>
