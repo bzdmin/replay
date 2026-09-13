@@ -310,17 +310,35 @@
              text-transform:uppercase;font-family:var(--mono)}
   .notyet .nt{color:var(--muted);font-size:13.5px;margin-top:8px}
 
-  .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:22px;
-        max-width:900px;margin:0 auto}
+  .cols{display:grid;grid-template-columns:1fr 1fr;max-width:900px;margin:0 auto;
+        background:var(--panel);border:1px solid var(--border2);border-radius:14px;
+        overflow:hidden}
+  .col{padding:26px 28px}
+  .col + .col{border-left:1px solid var(--border)}
   .col h3{font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);
           font-weight:700;margin:0 0 12px}
   .col p,.col li{color:var(--muted);font-size:13.5px;line-height:1.65;margin:0 0 10px}
   .col ul{margin:0;padding-left:18px}
   .col strong{color:var(--text);font-weight:600}
 
-  .foot{margin-top:70px;padding:28px 0 8px;border-top:1px solid var(--border);
-        color:var(--dim);font-size:12.5px;display:flex;gap:20px;flex-wrap:wrap;
-        justify-content:center;text-align:center}
+  /* The landing: a deliberate close, not a footer tacked on after the fact. */
+  .landing{margin-top:70px;padding-top:32px;border-top:1px solid var(--border);
+           max-width:900px;margin-left:auto;margin-right:auto}
+  .landing-top{display:flex;justify-content:space-between;align-items:flex-start;
+              flex-wrap:wrap;gap:14px}
+  .landing-brand{font-size:17px;font-weight:800;letter-spacing:-.01em}
+  .landing-tag{color:var(--muted);font-size:13.5px;margin-top:4px}
+  .landing-top a{color:var(--muted);font-size:13px;text-decoration:none;
+                 border-bottom:1px solid var(--border)}
+  .landing-top a:hover{color:var(--accent);border-bottom-color:var(--accent)}
+  .landing-track{color:var(--dim);font-size:12.5px;margin-top:20px}
+  .landing-badge{font-family:var(--mono);color:var(--dim);font-size:12px;
+                 letter-spacing:.3px;margin-top:10px}
+  @media(max-width:680px){
+    .cols{grid-template-columns:1fr}
+    .col + .col{border-left:0;border-top:1px solid var(--border)}
+    .landing-top{flex-direction:column}
+  }
 
   @media(max-width:680px){
     .limits{grid-template-columns:1fr}
@@ -552,12 +570,16 @@ python scripts/rehearse.py \
   </div>
 </section>
 
-<div class="foot">
-  <span>AWS Agents for Humans Hackathon, Professional Agents</span>
-  <span>Built with the Strands Agents SDK on Amazon Bedrock</span>
-  <span><a href="https://github.com/bzdmin/replay">Source on GitHub</a></span>
-  <span>Apache-2.0</span>
-  <span>A rehearsal costs about $0.58 in model tokens</span>
+<div class="landing">
+  <div class="landing-top">
+    <div>
+      <div class="landing-brand">REPLAY</div>
+      <div class="landing-tag">Rehearse a change before you ship it.</div>
+    </div>
+    <a href="https://github.com/bzdmin/replay" target="_blank" rel="noopener">Source on GitHub &rarr;</a>
+  </div>
+  <div class="landing-track">AWS Agents for Humans Hackathon &#183; Professional Agents</div>
+  <div class="landing-badge">Strands Agents SDK &#183; Amazon Bedrock &#183; Apache-2.0 &#183; ~$0.58/rehearsal</div>
 </div>
 
 </div>
